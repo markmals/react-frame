@@ -3,6 +3,7 @@ import type { Middleware, RequestContext } from "remix/router";
 
 import { isRscRequest, RSC_CONTENT_TYPE } from "../protocol.ts";
 import { isFrameRequest, RenderScopeProvider } from "./frame.tsx";
+import { getActionState, renderAfterAction } from "./render-after-action.ts";
 import { renderPayload, type ServerRuntime } from "./runtime.ts";
 import { ActionState } from "./server-actions.ts";
 
@@ -19,6 +20,9 @@ export type RenderMiddleware = Middleware<{
  * Installs `context.render(root, init)`, which responds with an HTML document, or with an RSC
  * payload when the browser runtime or a `<Frame>` asks for one. Redirect responses to RSC
  * navigations become redirect payloads so the browser runtime can update the URL.
+ *
+ * After a server function runs, the page is rendered in a follow-up `GET` that sees the state
+ * the function saved. Install this before `session()` so the session is persisted by then.
  */
 export function createRender(runtime: ServerRuntime): RenderMiddleware {
   const install = renderWith((context) => createRenderFunction(context, runtime));
@@ -26,6 +30,9 @@ export function createRender(runtime: ServerRuntime): RenderMiddleware {
   const middleware: RenderMiddleware = (context, next) =>
     install(context, async () => {
       const response = await next();
+      const action = context.get(ActionState);
+      if (action) return renderAfterAction(context, response, action);
+
       const location = response.headers.get("Location");
       if (
         location === null ||
@@ -50,7 +57,7 @@ function createRenderFunction(
   runtime: ServerRuntime,
 ): RenderFunction {
   return async (root, init) => {
-    const action = context.get(ActionState);
+    const action = getActionState(context.request);
     const body = renderPayload(
       runtime,
       context.request,

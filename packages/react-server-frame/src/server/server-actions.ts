@@ -5,7 +5,7 @@ import type { Middleware, RequestContext } from "remix/router";
 import { ACTION_ID_HEADER, isRscRequest, RSC_CONTENT_TYPE } from "../protocol.ts";
 import { renderPayload, type ServerRuntime } from "./runtime.ts";
 
-/** The result of a server function call, read by `context.render()` for the same request. */
+/** The result of a server function call, which `render()` passes to the follow-up page render. */
 export class ActionState {
   constructor(
     readonly formState?: ReactFormState,
@@ -28,8 +28,8 @@ export function redirect(location: string) {
 
 /**
  * Runs server functions sent to the current URL, both from the browser runtime and from forms
- * submitted before JavaScript loads. Afterwards the request continues as a `GET` so the page's
- * own route renders the result, unless the function called `redirect()`.
+ * submitted before JavaScript loads. Unless the function called `redirect()`, `render()` then
+ * renders the current page in a follow-up `GET` so it reflects state saved by the action.
  */
 export function createServerActions(runtime: ServerRuntime): Middleware {
   return async (context, next) => {
@@ -54,9 +54,10 @@ export function createServerActions(runtime: ServerRuntime): Middleware {
       return new Response(body, { headers: { "Content-Type": RSC_CONTENT_TYPE } });
     }
 
+    // Respond without rendering so outer middleware (sessions in particular) persist the action's
+    // changes; render() sees ActionState on the way out and renders the page with them.
     context.set(ActionState, state);
-    context.method = "GET";
-    return next();
+    return new Response(null, { status: 204 });
   };
 }
 

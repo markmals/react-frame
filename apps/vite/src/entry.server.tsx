@@ -31,11 +31,11 @@ const cacheMiddleware: Middleware = useCacheMiddleware(createMemoryFileStorage()
 
 const router = createRouter({
   middleware: [
+    render(),
     asyncContext(),
     session(sessionCookie, sessionStorage),
     authMiddleware(),
     cacheMiddleware,
-    render(),
     serverActions(),
   ],
 });

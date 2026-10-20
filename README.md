@@ -23,15 +23,18 @@ The entry module default-exports `{ fetch }`, usually your router's `fetch`.
 
 ```ts
 import { asyncContext } from "remix/middleware/async-context";
+import { session } from "remix/middleware/session";
 import { createRouter } from "remix/router";
 import { render, serverActions } from "react-server-frame/vite/server";
 
 const router = createRouter({
-  middleware: [asyncContext(), render(), serverActions()],
+  middleware: [render(), asyncContext(), session(cookie, storage), serverActions()],
 });
 ```
 
-`render()` adds `context.render(element, init)`, built on `renderWith` from `remix/middleware/render`. It responds with an HTML document, or with an RSC payload when the browser runtime or a frame asks for one. `serverActions()` runs server functions posted to the current URL, then lets the request continue as a `GET` so the page's own route renders the result. Put it after any middleware your server functions use, such as sessions or auth.
+`render()` adds `context.render(element, init)`, built on `renderWith` from `remix/middleware/render`. It responds with an HTML document, or with an RSC payload when the browser runtime or a frame asks for one. `serverActions()` runs server functions posted to the current URL. Put it after any middleware your server functions use, such as sessions or auth.
+
+After a server function runs (and doesn't redirect), `render()` renders the current page in a follow-up `GET` that carries the cookies the function set, so the page and its frames see what the function saved. Install `render()` before `session()` so the session has been persisted by then.
 
 ### Render pages from controllers
 
