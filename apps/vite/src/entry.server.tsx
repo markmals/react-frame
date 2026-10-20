@@ -2,20 +2,18 @@ import { lazy } from "react";
 import { mapFrames, useServerMiddleware } from "react-server-frame/vite/frames";
 import { useCacheMiddleware } from "vite-plugin-react-use-cache/remix";
 
-import { asyncContext } from "remix/async-context-middleware";
-import { requireAuth } from "remix/auth-middleware";
 import { createCookie } from "remix/cookie";
-import { createRouter, type MiddlewareContext } from "remix/fetch-router";
 import { createMemoryFileStorage } from "remix/file-storage/memory";
-import { createCookieSessionStorage } from "remix/session/cookie-storage";
-import { session } from "remix/session-middleware";
+import { asyncContext } from "remix/middleware/async-context";
+import { requireAuth } from "remix/middleware/auth";
+import { session } from "remix/middleware/session";
+import { redirect } from "remix/response/redirect";
+import { createRouter, type RouterContext } from "remix/router";
+import { createCookieSessionStorage } from "remix/session-storage/cookie";
 
 import { sessionSecret } from "@/env";
 import { routes } from "@/routes";
-import atmosphere from "@/routes/atmosphere";
 import { authMiddleware } from "@/lib/auth";
-import { databaseMiddleware } from "@/lib/database";
-import { redirect } from "remix/response/redirect";
 
 const Home = lazy(() => import("@/frames/home"));
 const Protected = lazy(() => import("@/frames/protected"));
@@ -29,18 +27,17 @@ const sessionCookie = createCookie("__session", {
 
 const sessionStorage = createCookieSessionStorage();
 
-const middleware = [
-  asyncContext(),
-  session(sessionCookie, sessionStorage),
-  databaseMiddleware(),
-  authMiddleware(),
-];
-
 const router = createRouter({
-  middleware,
+  middleware: [asyncContext(), session(sessionCookie, sessionStorage), authMiddleware()],
 });
 
-router.map(routes.atmosphere, atmosphere);
+export type AppContext = RouterContext<typeof router>;
+
+declare module "remix" {
+  interface RouterTypes {
+    context: AppContext;
+  }
+}
 
 mapFrames(router, routes.frames, {
   middleware: [useCacheMiddleware(createMemoryFileStorage()), useServerMiddleware()],
@@ -58,8 +55,6 @@ mapFrames(router, routes.frames, {
     },
   },
 });
-
-export type AppContext = MiddlewareContext<typeof middleware>;
 
 export default {
   async fetch(request: Request) {

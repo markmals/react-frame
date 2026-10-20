@@ -1,12 +1,12 @@
 import { cache } from "react";
 import type { ReactFormState } from "react-dom/client";
-import { getContext } from "remix/async-context-middleware";
-import type { Middleware, RequestContext, RequestHandler, Router } from "remix/fetch-router";
-import type { Route } from "remix/fetch-router/routes";
+import { getContext } from "remix/middleware/async-context";
+import { createMatcher, type Matcher } from "remix/route-pattern/match";
+import type { Middleware, RequestContext, RequestHandler, Router } from "remix/router";
+import type { Route } from "remix/routes";
 
 import { ClientFrame, FetchFrameProvider } from "./frames.client.tsx";
 import type { Payload } from "./generic-payload.ts";
-import { RoutePattern } from "remix/route-pattern";
 
 export function mapFrames<
   Context extends RequestContext<any, any> = RequestContext<{}, []>,
@@ -17,7 +17,7 @@ export function mapFrames<
   {
     components,
     middleware = [],
-  }: { middleware?: Middleware<any, any, any>[]; components: Components<Frames> },
+  }: { middleware?: Middleware<any>[]; components: Components<Frames> },
   config: {
     createTemporaryReferenceSet: () => unknown;
     fetchFrame: (url: URL, signal: AbortSignal) => Promise<React.ReactNode>;
@@ -34,7 +34,7 @@ export function mapFrames<
   const { createTemporaryReferenceSet, fetchFrame, prerender, renderToReadableStream } = config;
 
   for (let [key, frame] of Object.entries(frames)) {
-    if (typeof (frame as Route).pattern?.test === "function") {
+    if (isRoute(frame)) {
       const handler: RequestHandler = ({ request }) => {
         return render({
           createTemporaryReferenceSet,
@@ -55,7 +55,6 @@ export function mapFrames<
           : ((components[key].middleware ?? []) as Middleware[]);
 
       const action = {
-        action: handler,
         handler,
         middleware: [
           reactRedirectsMiddleware(renderToReadableStream),
@@ -64,11 +63,11 @@ export function mapFrames<
         ],
       };
 
-      let route = frame.pattern as RoutePattern<string>;
-      router.route("GET", route.source, action);
-      router.route("GET", route.source + ".rsc", action);
-      router.route("POST", route.source, action);
-      router.route("POST", route.source + ".rsc", action);
+      const pattern = frame.pattern.source;
+      router.route("GET", pattern, action);
+      router.route("GET", pattern + ".rsc", action);
+      router.route("POST", pattern, action);
+      router.route("POST", pattern + ".rsc", action);
     } else {
       mapFrames(
         router,
@@ -130,6 +129,7 @@ export function reactRedirectsMiddleware(
         },
       });
     }
+    return response;
   };
 }
 
@@ -226,14 +226,8 @@ export async function render({
   root: React.ReactNode;
 }) {
   const ctx = getContext();
-  let redirect: RedirectState | undefined;
-  try {
-    redirect = ctx.get(RedirectState);
-  } catch {}
-  let state: UseServerState | undefined;
-  try {
-    state = ctx.get(UseServerState);
-  } catch {}
+  const redirect = ctx.get(RedirectState);
+  const state = ctx.get(UseServerState);
 
   try {
     const payload: Payload = redirect
@@ -309,7 +303,7 @@ type Components<R extends Routes> = {
     :
         | React.ComponentType
         | {
-            middleware?: Middleware<any, any, any>[];
+            middleware?: Middleware<any>[];
             component: React.ComponentType;
           };
 };
@@ -361,17 +355,32 @@ function match(
   href: string,
 ): React.ComponentType | undefined {
   for (const [id, route] of Object.entries(frames)) {
-    if (typeof (route as Route).pattern?.test === "function") {
-      if ((route as Route).pattern.test(href)) {
+    if (isRoute(route)) {
+      if (routeMatches(route, href)) {
         return typeof components?.[id] === "object" && components[id].component
           ? components[id].component
           : (components[id] as React.ComponentType);
       }
     } else {
-      let matched = match(route as Routes, components?.[id] as unknown as Components<Routes>, href);
+      let matched = match(route, components?.[id] as unknown as Components<Routes>, href);
       if (matched) return matched;
     }
   }
+}
+
+function isRoute(value: Route | Routes): value is Route {
+  return typeof value.href === "function";
+}
+
+const matchers = new WeakMap<Route, Matcher>();
+
+function routeMatches(route: Route, href: string) {
+  let matcher = matchers.get(route);
+  if (!matcher) {
+    matcher = createMatcher(route.pattern);
+    matchers.set(route, matcher);
+  }
+  return matcher.match(href) !== null;
 }
 
 function isReactRequest(url: URL) {

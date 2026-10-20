@@ -1,14 +1,12 @@
 "use server";
 
 import { redirect } from "react-server-frame";
-import { getContext } from "remix/async-context-middleware";
-import { startExternalAuth } from "remix/auth";
-import * as s from "remix/data-schema";
+import { completeAuth, verifyCredentials } from "remix/auth";
+import { getContext } from "remix/middleware/async-context";
 import { Session } from "remix/session";
 
-import type { AppContext } from "@/entry.server";
 import { routes } from "@/routes";
-import { atmosphereIdentifierSessionKey, createAuthProvider } from "@/lib/auth";
+import { passwordProvider, type AuthSession } from "@/lib/auth";
 
 export type LogoutResult =
   | {
@@ -22,8 +20,7 @@ export type LogoutResult =
 
 export async function logoutAction(): Promise<LogoutResult> {
   try {
-    const { get } = getContext();
-    const session = get(Session);
+    const session = getContext().get(Session);
     session.unset("auth");
     session.regenerateId(true);
     redirect(routes.frames.home.href());
@@ -40,10 +37,6 @@ export async function logoutAction(): Promise<LogoutResult> {
   }
 }
 
-const loginFormSchema = s.object({
-  handleOrDid: s.string(),
-});
-
 export type LoginResult =
   | {
       success: true;
@@ -55,24 +48,21 @@ export type LoginResult =
     };
 
 export async function loginAction(_: unknown, formData: FormData): Promise<LoginResult> {
-  const parsed = s.parseSafe(loginFormSchema, Object.fromEntries(formData));
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: "Handle is required.",
-    };
-  }
-
-  const context = getContext() as AppContext;
+  const context = getContext();
+  // Server actions receive the form as an argument; expose it the way formData() middleware would.
+  context.set(FormData, formData);
 
   try {
-    const identifier = normalizeAtmosphereIdentifier(parsed.value.handleOrDid);
-    const provider = await createAuthProvider(identifier);
+    const identity = await verifyCredentials(passwordProvider, context);
+    if (!identity) {
+      return {
+        success: false,
+        error: "Invalid username or password.",
+      };
+    }
 
-    let session = context.get(Session);
-    session.set(atmosphereIdentifierSessionKey, identifier);
-
-    redirect(await startExternalAuth(provider, context));
+    completeAuth(context).set("auth", { username: identity.username } satisfies AuthSession);
+    redirect(routes.frames.home.href());
   } catch (reason) {
     console.error(reason);
     return {
@@ -85,8 +75,4 @@ export async function loginAction(_: unknown, formData: FormData): Promise<Login
     success: true,
     message: "Redirecting...",
   };
-}
-
-function normalizeAtmosphereIdentifier(value: string) {
-  return value.trim();
 }

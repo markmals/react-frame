@@ -6,8 +6,8 @@ import {
   loadServerAction,
   renderToReadableStream,
 } from "@vitejs/plugin-rsc/rsc";
-import type { Middleware } from "remix/fetch-router";
-import type { Route } from "remix/fetch-router/routes";
+import type { Middleware, RequestContext, Router } from "remix/router";
+import type { Route } from "remix/routes";
 
 import {
   mapFrames as _mapFrames,
@@ -20,12 +20,12 @@ import { fetchFrame } from "./fetch-frame.ts";
 
 interface Routes extends Record<string, Route | Routes> {}
 
-export function mapFrames<Frames extends Routes>(
-  router: Parameters<typeof _mapFrames<Frames>>[0],
-  frames: Parameters<typeof _mapFrames<Frames>>[1],
-  actions: Parameters<typeof _mapFrames<Frames>>[2],
+export function mapFrames<Context extends RequestContext<any, any>, Frames extends Routes>(
+  router: Router<Context>,
+  frames: Frames,
+  options: Parameters<typeof _mapFrames<Context, Frames>>[2],
 ) {
-  return _mapFrames<Frames>(router, frames, actions, {
+  return _mapFrames(router, frames, options, {
     createTemporaryReferenceSet,
     fetchFrame,
     prerender: async (...args) => {

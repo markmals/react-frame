@@ -1,9 +1,6 @@
-import { route } from "remix/fetch-router/routes";
+import { route } from "remix/routes";
 
 export const routes = route({
-  atmosphere: {
-    callback: "/atmosphere/callback",
-  },
   frames: {
     home: "/",
     protected: "/protected",

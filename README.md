@@ -7,7 +7,7 @@ New type of RSC routing inspired by iFrames and Remix 3.
 ### Define your routes
 
 ```ts
-import { route } from "remix/fetch-router/routes";
+import { route } from "remix/routes";
 
 export const routes = route({
   frames: {

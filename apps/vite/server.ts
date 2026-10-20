@@ -1,8 +1,8 @@
 import { createServer } from "node:http";
 
-import { createRouter } from "remix/fetch-router";
+import { staticFiles } from "remix/middleware/static";
 import { createRequestListener } from "remix/node-fetch-server";
-import { staticFiles } from "remix/static-middleware";
+import { createRouter } from "remix/router";
 
 // @ts-ignore - may or may not exist yet
 import _app from "./dist/rsc/index.js";

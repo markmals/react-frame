@@ -13,16 +13,15 @@ import { cn } from "@/lib/utils";
 export function LoginForm({
   action,
   className,
-  handleOrDid,
   ...props
 }: React.ComponentProps<"div"> & {
   action: typeof loginAction;
-  handleOrDid?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
 
-  const handleInputId = useId();
-  const handleInputErrorId = useId();
+  const usernameInputId = useId();
+  const passwordInputId = useId();
+  const errorId = useId();
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -44,29 +43,41 @@ export function LoginForm({
               <span className="sr-only">Acme Inc.</span>
             </a>
             <h1 className="text-xl font-bold">Welcome to Acme Inc.</h1>
-            <FieldDescription>Connect with your internet handle.</FieldDescription>
+            <FieldDescription>
+              Sign in, or pick a new username and password to create an account.
+            </FieldDescription>
           </div>
           <Field>
-            <FieldLabel hidden htmlFor={handleInputId}>
-              Handle
+            <FieldLabel hidden htmlFor={usernameInputId}>
+              Username
             </FieldLabel>
             <Input
-              name="handleOrDid"
-              defaultValue={handleOrDid}
-              id={handleInputId}
-              aria-labelledby={handleInputErrorId}
+              name="username"
+              id={usernameInputId}
+              aria-describedby={errorId}
               type="text"
-              placeholder="alice.xyz.social"
+              placeholder="Username"
               required
-              inputMode="url"
               autoCapitalize="off"
               autoCorrect="off"
               autoComplete="username"
               spellCheck="false"
             />
-            <FieldError id={handleInputErrorId}>
-              {state?.success === false ? state.error : null}
-            </FieldError>
+          </Field>
+          <Field>
+            <FieldLabel hidden htmlFor={passwordInputId}>
+              Password
+            </FieldLabel>
+            <Input
+              name="password"
+              id={passwordInputId}
+              aria-describedby={errorId}
+              type="password"
+              placeholder="Password"
+              required
+              autoComplete="current-password"
+            />
+            <FieldError id={errorId}>{state?.success === false ? state.error : null}</FieldError>
           </Field>
           <Field>
             <Button type="submit" disabled={pending || state?.success} focusableWhenDisabled>
