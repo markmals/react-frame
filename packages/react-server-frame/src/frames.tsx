@@ -341,7 +341,6 @@ export function Frame({ src }: { src: string }) {
   const Component = match(cache.frames, cache.components, url.href);
   if (!Component) throw new NotFoundError("No matching frame found");
 
-  console.log(Component);
   return (
     <ClientFrame src={url.pathname + url.search}>
       <Component />
