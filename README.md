@@ -1,6 +1,8 @@
-# A new type of RSC routing based on `<Frame />`
+# react-frame
 
-New type of RSC routing inspired by iFrames and Remix 3. Routes are plain [Remix router](https://github.com/remix-run/remix/tree/main/packages/fetch-router) routes, pages are React Server Components, and any route can be embedded in another page as a frame.
+A new type of React routing based on `<Frame />`, inspired by iFrames and Remix 3. Routes are plain [Remix router](https://github.com/remix-run/remix/tree/main/packages/fetch-router) routes, pages are React components, and any route can be embedded in another page as a frame.
+
+Pages render as React Server Components on a server, or entirely in the browser as a [single-page app](#single-page-apps). Either way the routes, controllers, and frames are the same, so an app can start client-only and move to a server, or back, without changing frameworks.
 
 ## How it works
 
@@ -195,3 +197,29 @@ render(
   </ResolveFrameContext>,
 );
 ```
+
+## Single-page apps
+
+The same routes, controllers, and frames run entirely in the browser with `react-frame/spa`, without React Server Components or a server. Its `render()` middleware gives routes `context.render(element, init)`, which responds with a bodyless `Response` that carries the element:
+
+```tsx
+import { render, run } from "react-frame/spa";
+import { createRouter } from "remix/router";
+
+const router = createRouter({
+  middleware: [render()],
+  defaultHandler({ render }) {
+    return render(<NotFound />, { status: 404 });
+  },
+});
+
+router.map(routes, controller);
+
+run(router, { container: document.getElementById("root")!, fallback: <p>Loading…</p> });
+```
+
+`run()` renders the route for the current URL into `container`, showing `fallback` until it has loaded. From then on, every navigation, frame, and reload is a request dispatched through `router` in the browser, so routes run their middleware, read submitted forms with `request.formData()`, and can return `redirect()` responses. Its default `resolveFrame` is `createRouteResolver(router)`; pass `resolveFrame` to `run()` to wrap or replace it. `dispose()` on the value `run()` returns unmounts the app.
+
+Outside React Server Components, `import { Frame } from "react-frame"` gets a frame that resolves in the browser, so a page renders unchanged in either kind of app. It suspends until its route has loaded, like a server-rendered frame, and loads again whenever the content around it does. `useFrame()`, `useFrames()`, `data-target`, and `data-src` behave as they do on a server; there are no server functions, so mutations call ordinary functions and then reload the frames that show what changed.
+
+[`apps/spa`](https://github.com/markmals/react-frame/tree/main/apps/spa) is a port of Remix's SPA demo.
