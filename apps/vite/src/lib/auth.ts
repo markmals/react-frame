@@ -14,18 +14,18 @@ import {
   type GoodAuth,
 } from "remix/middleware/auth";
 
-import { users } from "@/data/schema";
+import { Users } from "@/data/schema";
 import { db } from "@/lib/database";
 
 export type AuthIdentity = {
   username: string;
 };
 
-const authSessionSchema = s.object({
+const AuthSessionSchema = s.object({
   username: s.string(),
 });
 
-export type AuthSession = s.InferOutput<typeof authSessionSchema>;
+export type AuthSession = s.InferOutput<typeof AuthSessionSchema>;
 
 export function getAuth() {
   const { get } = getContext();
@@ -37,11 +37,11 @@ export function authMiddleware() {
     schemes: [
       createSessionAuthScheme<AuthIdentity, AuthSession>({
         read(session) {
-          const parsed = s.parseSafe(authSessionSchema, session.get("auth"));
+          const parsed = s.parseSafe(AuthSessionSchema, session.get("auth"));
           return parsed.success ? parsed.value : null;
         },
         async verify({ username }) {
-          const user = await db.find(users, username);
+          const user = await db.find(Users, username);
           return user ? { username: user.username } : null;
         },
         invalidate(session) {
@@ -52,7 +52,7 @@ export function authMiddleware() {
   });
 }
 
-const credentialsSchema = f.object({
+const CredentialsSchema = f.object({
   username: f.field(
     s
       .string()
@@ -66,16 +66,16 @@ export const passwordProvider = createCredentialsAuthProvider({
   parse(context) {
     const formData = context.get(FormData);
     if (!formData) throw new Error("Expected login form data in request context");
-    return s.parseSafe(credentialsSchema, formData);
+    return s.parseSafe(CredentialsSchema, formData);
   },
   // An unknown username signs up a new account so the example works without seed data.
   async verify(credentials): Promise<AuthIdentity | null> {
     if (!credentials.success) return null;
 
     const { username, password } = credentials.value;
-    const user = await db.find(users, username);
+    const user = await db.find(Users, username);
     if (!user) {
-      await db.create(users, { username, passwordHash: await hashPassword(password) });
+      await db.create(Users, { username, passwordHash: await hashPassword(password) });
       return { username };
     }
 
