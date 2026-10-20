@@ -46,3 +46,12 @@ pnpm db:reset
 ```
 
 `db:rollback` reverts the latest migration, while `db:reset` recreates the database from scratch. The other commands let you inspect or update it without discarding your local changes.
+
+## Tests
+
+```sh
+pnpm exec playwright install chromium
+pnpm test
+```
+
+`pnpm test` runs two Vitest projects. The `server` project (`app/**/*.test.ts`) ports the demo's controller tests: each test file runs the app on its own Vite dev server, against an in-memory database, and submits forms the way a browser without JavaScript does (see [`test/helpers.ts`](test/helpers.ts)). The `browser` project (`app/**/*.test.browser.tsx`) uses Vitest Browser Mode with Playwright's Chromium to test client components such as the cart's pending states and the image carousel. Run one with `pnpm test --project server` or `--project browser`.
