@@ -65,6 +65,8 @@ import { Frame } from "react-frame";
 
 A frame is resolved by sending a subrequest through the router, so its route runs its own middleware (auth, sessions, and so on) exactly as if the browser had requested it. A `name` is optional; it lets other components and links find the frame.
 
+Without a `<Suspense>` boundary, a frame's content is part of the first HTML flush. Wrap a frame only when its route is slow enough to be worth streaming. React then sends the fallback first and the frame's markup afterwards, in a hidden element that a script reveals, so readers without JavaScript see only the fallback. The same applies to a boundary inside a frame's page around client components: during server rendering they can suspend while their module loads, even when no data is pending.
+
 ### Reload frames
 
 Frames are independently reloadable sections of the page. `reload()` fetches the frame's route again and resolves once the new content has loaded. Inside a transition, React shows it when the transition finishes, so pending state and new content appear together.
