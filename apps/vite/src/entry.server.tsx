@@ -7,7 +7,7 @@ import { asyncContext } from "remix/middleware/async-context";
 import { requireAuth } from "remix/middleware/auth";
 import { session } from "remix/middleware/session";
 import { redirect } from "remix/response/redirect";
-import { createRouter, type RouterContext } from "remix/router";
+import { createRouter, type Middleware, type RouterContext } from "remix/router";
 import { createCookieSessionStorage } from "remix/session-storage/cookie";
 
 import { sessionSecret } from "@/env";
@@ -25,12 +25,16 @@ const sessionCookie = createCookie("__session", {
 
 const sessionStorage = createCookieSessionStorage();
 
+// vite-plugin-react-use-cache types its middleware with the pre-3.0 `remix/fetch-router` module,
+// which no longer resolves; without this annotation it erases the router's context type.
+const cacheMiddleware: Middleware = useCacheMiddleware(createMemoryFileStorage());
+
 const router = createRouter({
   middleware: [
     asyncContext(),
     session(sessionCookie, sessionStorage),
     authMiddleware(),
-    useCacheMiddleware(createMemoryFileStorage()),
+    cacheMiddleware,
     render(),
     serverActions(),
   ],

@@ -7,8 +7,14 @@ import {
   loadServerAction,
   renderToReadableStream,
 } from "@vitejs/plugin-rsc/rsc";
+import type { Middleware } from "remix/router";
 
-import { createRender, createServerActions, type ServerRuntime } from "../index.ts";
+import {
+  createRender,
+  createServerActions,
+  type RenderMiddleware,
+  type ServerRuntime,
+} from "../index.ts";
 import type { Payload } from "../protocol.ts";
 import type * as SsrEntry from "./entry.ssr.tsx";
 import { fetchFrame } from "./fetch-frame.ts";
@@ -31,11 +37,11 @@ const runtime: ServerRuntime = {
 };
 
 /** Installs `context.render()` backed by `@vitejs/plugin-rsc`. */
-export function render() {
+export function render(): RenderMiddleware {
   return createRender(runtime);
 }
 
 /** Runs server functions posted to the current URL. Place after the middleware they rely on. */
-export function serverActions() {
+export function serverActions(): Middleware {
   return createServerActions(runtime);
 }

@@ -1,5 +1,5 @@
-import { renderWith } from "remix/middleware/render";
-import type { RequestContext } from "remix/router";
+import { type Renderer, renderWith } from "remix/middleware/render";
+import type { Middleware, RequestContext } from "remix/router";
 
 import { isRscRequest, RSC_CONTENT_TYPE } from "../protocol.ts";
 import { isFrameRequest, RenderScopeProvider } from "./frame.tsx";
@@ -8,15 +8,22 @@ import { ActionState } from "./server-actions.ts";
 
 export type RenderFunction = (root: React.ReactNode, init?: ResponseInit) => Promise<Response>;
 
+/** Middleware that installs a {@link RenderFunction} as `context.render`. */
+export type RenderMiddleware = Middleware<{
+  key: typeof Renderer;
+  value: RenderFunction;
+  property: "render";
+}>;
+
 /**
  * Installs `context.render(root, init)`, which responds with an HTML document, or with an RSC
  * payload when the browser runtime or a `<Frame>` asks for one. Redirect responses to RSC
  * navigations become redirect payloads so the browser runtime can update the URL.
  */
-export function createRender(runtime: ServerRuntime) {
+export function createRender(runtime: ServerRuntime): RenderMiddleware {
   const install = renderWith((context) => createRenderFunction(context, runtime));
 
-  const middleware: typeof install = (context, next) =>
+  const middleware: RenderMiddleware = (context, next) =>
     install(context, async () => {
       const response = await next();
       const location = response.headers.get("Location");
