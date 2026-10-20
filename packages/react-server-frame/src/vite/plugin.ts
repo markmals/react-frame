@@ -1,11 +1,9 @@
-import { execFile } from "node:child_process";
 import * as path from "node:path";
-import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import * as Vite from "vite";
 
-const execFileAsync = promisify(execFile);
+import { findClientModules } from "./find-client-modules.ts";
 
 function getEntry(file: string) {
   return Vite.normalizePath(path.join(path.dirname(fileURLToPath(import.meta.url)), file));
@@ -61,33 +59,12 @@ export function reactServerFrame({ entry = "/src/entry.server" }: { entry?: stri
         const entries = new Set<string>([getEntry("entry.client.tsx")]);
 
         try {
-          const ruleYaml = `id: find-use-client-directives
-language: TSX
-rule:
-  all:
-    - kind: expression_statement
-    - has:
-        kind: string
-        regex: '^[''"]use client[''"]$'
-    - inside:
-        kind: program
-        stopBy: neighbor`;
-
-          const { stdout } = await execFileAsync("ast-grep", [
-            "scan",
-            "--json",
-            "--inline-rules",
-            ruleYaml,
-          ]);
-          const results: Array<{ file: string }> = JSON.parse(stdout);
-          for (const result of results) {
-            entries.add(result.file);
+          for (const file of await findClientModules(".")) {
+            entries.add(file);
           }
           console.log(`Optimizing dependencies for ${entries.size} client modules`);
-        } catch {
-          console.warn(
-            "Install https://ast-grep.github.io/ to enable dependencies optimization discovery",
-          );
+        } catch (error) {
+          console.warn("Could not discover client modules for dependency optimization", error);
         }
 
         return Vite.mergeConfig(

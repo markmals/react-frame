@@ -37,6 +37,7 @@
     "prepublishOnly": "vp run build"
   },
   "dependencies": {
+    "@ast-grep/napi": "catalog:",
     "rsc-html-stream": "catalog:"
   },
   "devDependencies": {
