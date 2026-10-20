@@ -1,12 +1,11 @@
 import { routes } from "../../../routes.ts";
 import { Document } from "../../../ui/document.tsx";
 import { register } from "../actions.ts";
-import { authCardClass } from "../schemas.ts";
 
 export function RegisterPage() {
   return (
     <Document>
-      <div className={`card ${authCardClass}`}>
+      <div className="card mx-auto my-8 max-w-125">
         <h1>Register</h1>
         <form action={register}>
           <div className="form-group">
@@ -46,7 +45,7 @@ export function RegisterPage() {
 export function ExistingAccountPage() {
   return (
     <Document>
-      <div className={`card ${authCardClass}`}>
+      <div className="card mx-auto my-8 max-w-125">
         <div className="alert alert-error">An account with this email already exists.</div>
         <p>
           <a href={routes.auth.register.index.href()} className="btn">

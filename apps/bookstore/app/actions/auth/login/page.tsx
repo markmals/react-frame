@@ -1,7 +1,6 @@
 import { routes } from "../../../routes.ts";
 import { Document } from "../../../ui/document.tsx";
 import { login } from "../actions.ts";
-import { authCardClass } from "../schemas.ts";
 
 export interface LoginPageProps {
   error?: string;
@@ -10,7 +9,7 @@ export interface LoginPageProps {
 export function LoginPage({ error }: LoginPageProps) {
   return (
     <Document>
-      <div className={`card ${authCardClass}`}>
+      <div className="card mx-auto my-8 max-w-125">
         <h1>Login</h1>
 
         {typeof error === "string" ? <div className="alert alert-error mb-6">{error}</div> : null}

@@ -1,12 +1,11 @@
 import { routes } from "../../../routes.ts";
 import { Document } from "../../../ui/document.tsx";
 import { requestPasswordReset } from "../actions.ts";
-import { authCardClass } from "../schemas.ts";
 
 export function ForgotPasswordPage() {
   return (
     <Document>
-      <div className={`card ${authCardClass}`}>
+      <div className="card mx-auto my-8 max-w-125">
         <h1>Forgot Password</h1>
         <p>Enter your email address and we'll send you a link to reset your password.</p>
 
@@ -32,7 +31,7 @@ export function ForgotPasswordPage() {
 export function ForgotPasswordSuccessPage({ token }: { token?: string }) {
   return (
     <Document>
-      <div className={`card ${authCardClass}`}>
+      <div className="card mx-auto my-8 max-w-125">
         <div className="alert alert-success">Password reset link sent! Check your email.</div>
 
         {token ? (

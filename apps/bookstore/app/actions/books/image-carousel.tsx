@@ -37,7 +37,7 @@ export function ImageCarousel({
         aria-label="Previous image"
         disabled={current === 0}
         onClick={() => setIndex(current - 1)}
-        className={`${carouselButton} left-2`}
+        className="absolute top-1/2 left-2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-white opacity-90 outline-none transition duration-150 disabled:opacity-40"
       >
         <span className="text-icon leading-none">{"‹"}</span>
       </button>
@@ -46,13 +46,10 @@ export function ImageCarousel({
         aria-label="Next image"
         disabled={current === total - 1}
         onClick={() => setIndex(current + 1)}
-        className={`${carouselButton} right-2`}
+        className="absolute top-1/2 right-2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-white opacity-90 outline-none transition duration-150 disabled:opacity-40"
       >
         <span className="text-icon leading-none">{"›"}</span>
       </button>
     </div>
   );
 }
-
-const carouselButton =
-  "absolute top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-white opacity-90 outline-none transition duration-150 disabled:opacity-40";

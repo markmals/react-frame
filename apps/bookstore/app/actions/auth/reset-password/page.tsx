@@ -1,7 +1,6 @@
 import { routes } from "../../../routes.ts";
 import { Document } from "../../../ui/document.tsx";
 import { resetPassword } from "../actions.ts";
-import { authCardClass } from "../schemas.ts";
 
 export interface ResetPasswordPageProps {
   token: string;
@@ -11,7 +10,7 @@ export interface ResetPasswordPageProps {
 export function ResetPasswordPage({ error, token }: ResetPasswordPageProps) {
   return (
     <Document>
-      <div className={`card ${authCardClass}`}>
+      <div className="card mx-auto my-8 max-w-125">
         <h1>Reset Password</h1>
         <p>Enter your new password below.</p>
 
@@ -52,7 +51,7 @@ export function ResetPasswordPage({ error, token }: ResetPasswordPageProps) {
 export function ResetPasswordSuccessPage() {
   return (
     <Document>
-      <div className={`card ${authCardClass}`}>
+      <div className="card mx-auto my-8 max-w-125">
         <div className="alert alert-success">
           Password reset successfully! You can now login with your new password.
         </div>
