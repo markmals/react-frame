@@ -8,7 +8,7 @@
     "build": "tsc && vp build",
     "check": "vp check",
     "preview": "vp preview",
-    "start": "node server.ts"
+    "start": "node --env-file-if-exists=.env server.ts"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",

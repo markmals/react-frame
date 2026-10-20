@@ -4,10 +4,15 @@ import { staticFiles } from "remix/middleware/static";
 import { createRequestListener } from "remix/node-fetch-server";
 import { createRouter } from "remix/router";
 
-// @ts-ignore - may or may not exist yet
-import _app from "./dist/rsc/index.js";
+import type entry from "./src/entry.server.js";
 
-const app = _app as typeof import("./src/entry.server.js").default;
+// The server build bundles React, which picks its development or production build from NODE_ENV
+// when first loaded. Default to production so it matches the client bundle, then load the build
+// dynamically so the default is in place before React evaluates.
+process.env.NODE_ENV ??= "production";
+
+// @ts-ignore - may or may not exist yet
+const { default: app }: { default: typeof entry } = await import("./dist/rsc/index.js");
 
 const router = createRouter({
   middleware: [
