@@ -24,7 +24,8 @@ function Content({ initialPayload }: { initialPayload: Promise<Payload> }) {
 /** Shows a resolved payload, returning a promise that settles once React commits it. */
 async function commit(payload: Promise<Payload>) {
   const setPayload = await hydrated;
-  const committed = new Promise<void>((resolve) => commits.set(payload, resolve));
+  const { promise: committed, resolve } = Promise.withResolvers<void>();
+  commits.set(payload, resolve);
   startTransition(() => setPayload(payload));
   return committed;
 }
