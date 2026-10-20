@@ -1,0 +1,282 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: system-ui, -apple-system, sans-serif;
+
+  /* No line-height companions, so text inherits the body's line-height like the demo's stylesheet. */
+  --text-*: initial;
+  --text-sm: 0.875rem;
+  --text-caption: 0.9rem;
+  --text-base: 1rem;
+  --text-card-title: 1.1rem;
+  --text-subheading: 1.17rem;
+  --text-lead: 1.2rem;
+  --text-xl: 1.25rem;
+  --text-icon: 1.375rem;
+  --text-2xl: 1.5rem;
+  --text-display: 2rem;
+
+  --leading-body: 1.6;
+  --leading-prose: 1.8;
+
+  --default-transition-duration: 200ms;
+
+  --color-ink: #333;
+  --color-muted: #666;
+  --color-byline: #7f8c8d;
+  --color-page: #f5f5f5;
+  --color-panel: #f8f9fa;
+  --color-line: #ddd;
+  --color-placeholder: #ecf0f1;
+  --color-header: #2c3e50;
+  --color-footer: #34495e;
+  --color-price: #27ae60;
+
+  --color-primary: #3498db;
+  --color-primary-hover: #2980b9;
+  --color-secondary: #95a5a6;
+  --color-secondary-hover: #7f8c8d;
+  --color-danger: #e74c3c;
+  --color-danger-hover: #c0392b;
+
+  --color-success-light: #d4edda;
+  --color-success-border: #c3e6cb;
+  --color-success-dark: #155724;
+  --color-error-light: #f8d7da;
+  --color-error-border: #f5c6cb;
+  --color-error-dark: #721c24;
+  --color-warning-light: #fff3cd;
+  --color-warning-dark: #856404;
+  --color-info-light: #d1ecf1;
+  --color-info-dark: #0c5460;
+
+  --shadow-raised: 0 2px 4px rgb(0 0 0 / 0.1);
+  --shadow-lifted: 0 4px 8px rgb(0 0 0 / 0.15);
+  --shadow-cover: 0 4px 8px rgb(0 0 0 / 0.1);
+
+  --container-page: 1200px;
+
+  --grid-template-columns-books: repeat(auto-fill, minmax(280px, 1fr));
+  --grid-template-columns-dashboard: repeat(auto-fit, minmax(300px, 1fr));
+  --grid-template-columns-book-detail: 300px 1fr;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  /* Preflight resets these, but the demo's pages rely on the browser defaults. */
+  h1 {
+    font-size: var(--text-display);
+    font-weight: var(--font-weight-bold);
+  }
+  h2 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-bold);
+  }
+  h3 {
+    font-size: var(--text-subheading);
+    font-weight: var(--font-weight-bold);
+  }
+  ul {
+    list-style: disc;
+  }
+  ol {
+    list-style: decimal;
+  }
+  a {
+    text-decoration: underline;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  body {
+    line-height: var(--leading-body);
+    color: var(--color-ink);
+    background: var(--color-page);
+  }
+  header {
+    background: var(--color-header);
+    color: var(--color-white);
+    padding: --spacing(4) 0;
+    box-shadow: var(--shadow-raised);
+  }
+  header h1 {
+    font-size: var(--text-2xl);
+  }
+  header h1 a {
+    color: var(--color-white);
+    text-decoration: none;
+  }
+  nav a {
+    color: var(--color-white);
+    text-decoration: none;
+    margin-left: --spacing(6);
+    padding: --spacing(2);
+    border-radius: var(--radius-sm);
+    transition: background var(--default-transition-duration);
+  }
+  nav a:hover {
+    background: --alpha(var(--color-white) / 10%);
+  }
+  main {
+    padding: --spacing(8) 0;
+    min-height: calc(100vh - --spacing(50));
+  }
+  footer {
+    background: var(--color-footer);
+    color: var(--color-white);
+    padding: --spacing(8) 0;
+    margin-top: --spacing(16);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-white);
+  }
+  th,
+  td {
+    padding: --spacing(3);
+    text-align: left;
+    border-bottom: 1px solid var(--color-line);
+  }
+  th {
+    background: var(--color-panel);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    padding: --spacing(6);
+    margin-bottom: --spacing(6);
+    box-shadow: var(--shadow-raised);
+  }
+  .btn {
+    display: inline-block;
+    padding: --spacing(2) --spacing(4);
+    background: var(--color-primary);
+    color: var(--color-white);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    font-size: var(--text-base);
+    transition: background var(--default-transition-duration);
+  }
+  .btn:hover {
+    background: var(--color-primary-hover);
+  }
+  .btn-secondary {
+    background: var(--color-secondary);
+  }
+  .btn-secondary:hover {
+    background: var(--color-secondary-hover);
+  }
+  .btn-danger {
+    background: var(--color-danger);
+  }
+  .btn-danger:hover {
+    background: var(--color-danger-hover);
+  }
+  .form-group {
+    margin-bottom: --spacing(4);
+  }
+  .form-group label {
+    display: block;
+    margin-bottom: --spacing(1);
+    font-weight: var(--font-weight-medium);
+  }
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: --spacing(2);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-base);
+  }
+  .form-group textarea {
+    min-height: --spacing(25);
+    resize: vertical;
+  }
+  .alert {
+    padding: --spacing(4);
+    border-radius: var(--radius-sm);
+    margin-bottom: --spacing(4);
+  }
+  .alert-success {
+    background: var(--color-success-light);
+    border: 1px solid var(--color-success-border);
+    color: var(--color-success-dark);
+  }
+  .alert-error {
+    background: var(--color-error-light);
+    border: 1px solid var(--color-error-border);
+    color: var(--color-error-dark);
+  }
+  .book-card {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-raised);
+    transition: transform var(--default-transition-duration);
+  }
+  .book-card:hover {
+    transform: translateY(--spacing(-1));
+    box-shadow: var(--shadow-lifted);
+  }
+  .book-card img {
+    width: 100%;
+    height: --spacing(75);
+    object-fit: cover;
+    background: var(--color-placeholder);
+  }
+  .book-card-body {
+    padding: --spacing(4);
+  }
+  .book-card h3 {
+    font-size: var(--text-card-title);
+    margin-bottom: --spacing(2);
+  }
+  .book-card .author {
+    color: var(--color-byline);
+    font-size: var(--text-caption);
+    margin-bottom: --spacing(2);
+  }
+  .book-card .price {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-price);
+    margin: --spacing(2) 0;
+  }
+  .actions {
+    display: flex;
+    gap: --spacing(2);
+  }
+  .actions form {
+    display: inline;
+  }
+  .badge {
+    display: inline-block;
+    padding: --spacing(1) --spacing(2);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+  }
+  .badge-success {
+    background: var(--color-success-light);
+    color: var(--color-success-dark);
+  }
+  .badge-warning {
+    background: var(--color-warning-light);
+    color: var(--color-warning-dark);
+  }
+  .badge-info {
+    background: var(--color-info-light);
+    color: var(--color-info-dark);
+  }
+}

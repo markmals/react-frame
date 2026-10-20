@@ -1,0 +1,37 @@
+{
+  "name": "bookstore",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db:migrate": "remix db migrate",
+    "db:reset": "remix db reset --force",
+    "db:rollback": "remix db rollback",
+    "db:seed": "remix db seed",
+    "db:status": "remix db status",
+    "dev": "vp dev",
+    "build": "tsc && vp build",
+    "check": "vp check",
+    "start": "node server.ts"
+  },
+  "dependencies": {
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-server-dom-webpack": "catalog:",
+    "react-server-frame": "workspace:",
+    "remix": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "@types/dom-navigation": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitejs/plugin-rsc": "catalog:",
+    "oxc-transform-react": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}
