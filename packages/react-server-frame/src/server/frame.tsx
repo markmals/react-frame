@@ -96,6 +96,8 @@ async function fetchFrame(context: RequestContext<any, any>, initialUrl: URL) {
   const headers = new Headers(context.headers);
   for (const name of REQUEST_HEADERS_TO_REMOVE) headers.delete(name);
   headers.set("Accept", RSC_CONTENT_TYPE);
+  // The payload is decoded here, so a compression middleware must not encode it.
+  headers.set("Accept-Encoding", "identity");
 
   let url = initialUrl;
   for (let redirects = 0; redirects <= MAX_FRAME_REDIRECTS; redirects++) {
