@@ -1,6 +1,7 @@
 import { type Renderer, renderWith } from "remix/middleware/render";
 import type { Middleware, RequestContext } from "remix/router";
 
+import { PageFrame } from "../client.tsx";
 import { isRscRequest, RSC_CONTENT_TYPE } from "../protocol.ts";
 import { isFrameRequest, RenderScopeProvider } from "./frame.tsx";
 import { getActionState, renderAfterAction } from "./render-after-action.ts";
@@ -63,7 +64,7 @@ function createRenderFunction(
       type: "render",
       root: (
         <RenderScopeProvider context={context} runtime={runtime}>
-          {root}
+          <PageFrame src={context.url.pathname + context.url.search}>{root}</PageFrame>
         </RenderScopeProvider>
       ),
       formState: action?.formState,

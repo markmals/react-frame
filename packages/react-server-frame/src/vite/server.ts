@@ -17,7 +17,6 @@ import {
 } from "../index.ts";
 import type { Payload } from "../protocol.ts";
 import type * as SsrEntry from "./entry.ssr.tsx";
-import { fetchFrame } from "./fetch-frame.ts";
 
 const runtime: ServerRuntime = {
   createFromReadableStream: (stream) => createFromReadableStream<Payload>(stream),
@@ -25,7 +24,6 @@ const runtime: ServerRuntime = {
   decodeAction,
   decodeFormState,
   decodeReply,
-  fetchFrame,
   loadServerAction,
   async renderHtml(body, init, formState) {
     const ssr = await import.meta.viteRsc.import<typeof SsrEntry>("./entry.ssr.tsx", {

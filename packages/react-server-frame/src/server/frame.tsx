@@ -76,7 +76,7 @@ export async function Frame({ name, src }: { name?: string; src: string }) {
     throw new Error(`<Frame src="${src}"> must be same-origin`);
   }
 
-  const response = await fetchFrame(context, url);
+  const response = await fetchRoute(context, url);
   if (!response.body || !isRscResponse(response)) {
     throw new Error(`<Frame src="${src}"> did not render (${response.status})`);
   }
@@ -87,13 +87,13 @@ export async function Frame({ name, src }: { name?: string; src: string }) {
   }
 
   return (
-    <ClientFrame name={name} src={url.pathname + url.search} fetchFrame={runtime.fetchFrame}>
+    <ClientFrame name={name} src={url.pathname + url.search}>
       {payload.root}
     </ClientFrame>
   );
 }
 
-async function fetchFrame(context: RequestContext<any, any>, initialUrl: URL) {
+async function fetchRoute(context: RequestContext<any, any>, initialUrl: URL) {
   const headers = new Headers(context.headers);
   for (const name of REQUEST_HEADERS_TO_REMOVE) headers.delete(name);
   headers.set("Accept", RSC_CONTENT_TYPE);

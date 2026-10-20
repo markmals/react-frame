@@ -1,4 +1,4 @@
-import { ClientFrame, type FetchFrame } from "react-server-frame/client";
+import { ClientFrame, type ResolveFrame, ResolveFrameContext } from "react-server-frame/client";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vite-plus/test";
 import { page } from "vite-plus/test/browser";
 
@@ -22,19 +22,21 @@ let heavyMetal = {
 
 let action: PromiseWithResolvers<void>;
 let reload: PromiseWithResolvers<React.ReactNode>;
-let fetchFrame: Mock<FetchFrame>;
+let resolveFrame: Mock<ResolveFrame>;
 
 beforeEach(() => {
   action = Promise.withResolvers();
   reload = Promise.withResolvers();
-  fetchFrame = vi.fn<FetchFrame>(() => reload.promise);
+  resolveFrame = vi.fn<ResolveFrame>(() => reload.promise);
   vi.mocked(updateCartItem).mockReturnValue(action.promise);
   vi.mocked(removeCartItem).mockReturnValue(action.promise);
 
   render(
-    <ClientFrame src="/fragments/cart-items" fetchFrame={fetchFrame}>
-      <CartItems items={[bbq, heavyMetal]} total={43.99} canCheckout={false} />
-    </ClientFrame>,
+    <ResolveFrameContext value={resolveFrame}>
+      <ClientFrame src="/fragments/cart-items">
+        <CartItems items={[bbq, heavyMetal]} total={43.99} canCheckout={false} />
+      </ClientFrame>
+    </ResolveFrameContext>,
   );
 });
 
@@ -57,8 +59,8 @@ describe("CartItems", () => {
     expect([formData.get("bookId"), formData.get("quantity")]).toEqual(["2", "3"]);
 
     action.resolve();
-    await vi.waitFor(() => expect(fetchFrame).toHaveBeenCalledOnce());
-    expect(fetchFrame.mock.calls[0]![0].pathname).toBe("/fragments/cart-items");
+    await vi.waitFor(() => expect(resolveFrame).toHaveBeenCalledOnce());
+    expect(resolveFrame.mock.calls[0]![0].pathname).toBe("/fragments/cart-items");
     await expect.element(page.getByText("Total: ---")).toBeVisible();
 
     reload.resolve(

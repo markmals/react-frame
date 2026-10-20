@@ -65,7 +65,9 @@ A frame is resolved by sending a subrequest through the router, so its route run
 
 ### Reload frames
 
-Frames are independently reloadable sections of the page. `reload()` fetches the frame's route again and resolves once the new content has loaded. Inside a transition, React shows it when the transition finishes, so pending state and new content appear together. Outside any `<Frame>`, `useFrame()` returns the page itself, and its `reload()` renders the current URL again.
+Frames are independently reloadable sections of the page. `reload()` fetches the frame's route again and resolves once the new content has loaded. Inside a transition, React shows it when the transition finishes, so pending state and new content appear together. `src` is the pathname and search of the URL the frame shows, or is loading.
+
+Outside any `<Frame>`, `useFrame()` returns the page itself: its `src` and `pending` follow navigations, and its `reload()` renders the current URL again.
 
 ```tsx
 "use client";
@@ -157,3 +159,39 @@ A link or form with `data-target` loads into the mounted frame with that name in
 ```
 
 If no frame with that name is mounted, or `data-src` isn't a same-origin URL, the browser navigates the document normally.
+
+### Resolve frames
+
+In the browser, every load goes through one hook, `resolveFrame(url, request)`: a frame's reload, a `data-target` load, and the page's own navigations and reloads. It returns the React content to show, or a redirect `Response` whose `Location` the browser navigates to instead. `request` carries the `method`, the submitted form `body`, and an abort `signal`. On the server, `<Frame>` keeps resolving through the router as described above.
+
+The default hook fetches the route's RSC payload, which the server's router renders. To change it, give the plugin a browser entry of your own and pass your hook to `hydrate()`. The default is exported, so yours can wrap it:
+
+```tsx
+// app/entry.browser.tsx
+import { hydrate, resolveFrame } from "react-server-frame/vite/browser";
+
+hydrate({
+  resolveFrame(url, request) {
+    if (!navigator.onLine) return <OfflineNotice />;
+    return resolveFrame(url, request);
+  },
+});
+```
+
+```ts
+reactServerFrame({ entry: "/app/entry.server.ts", browserEntry: "/app/entry.browser.tsx" });
+```
+
+Tests can render a client component inside a frame and stand in for the hook with `ResolveFrameContext`:
+
+```tsx
+import { ClientFrame, ResolveFrameContext } from "react-server-frame/client";
+
+render(
+  <ResolveFrameContext value={() => <CartButton inCart />}>
+    <ClientFrame src="/fragments/cart-button/1">
+      <CartButton inCart={false} />
+    </ClientFrame>
+  </ResolveFrameContext>,
+);
+```

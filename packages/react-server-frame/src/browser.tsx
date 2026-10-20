@@ -1,34 +1,27 @@
-import { startTransition, StrictMode, use, useLayoutEffect, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { rscStream } from "rsc-html-stream/client";
 
-import { type MountedFrame, namedFrames, setPageReload } from "./frames.ts";
+import type { ResolveFrame } from "./frames.ts";
+import { createPage } from "./page.tsx";
 import { ACTION_ID_HEADER, RSC_CONTENT_TYPE, type Payload } from "./protocol.ts";
 
 type CreateFromFetch = (response: Promise<Response>, options?: object) => Promise<Payload>;
 
-type SetPayload = (payload: Promise<Payload>) => void;
-
-const { promise: hydrated, resolve: setHydrated } = Promise.withResolvers<SetPayload>();
-const commits = new WeakMap<Promise<Payload>, () => void>();
-
-function Content({ initialPayload }: { initialPayload: Promise<Payload> }) {
-  const [payload, setPayload] = useState(initialPayload);
-
-  useLayoutEffect(() => setHydrated(setPayload), []);
-  useLayoutEffect(() => commits.get(payload)?.(), [payload]);
-
-  const { root } = use(payload) as Extract<Payload, { type: "render" }>;
-  return root;
-}
-
-/** Shows a resolved payload, returning a promise that settles once React commits it. */
-async function commit(payload: Promise<Payload>) {
-  const setPayload = await hydrated;
-  const { promise: committed, resolve } = Promise.withResolvers<void>();
-  commits.set(payload, resolve);
-  startTransition(() => setPayload(payload));
-  return committed;
+/**
+ * Creates the `resolveFrame` hook for apps with a server: it fetches the route as an RSC payload,
+ * which the server's router renders, and decodes the React Flight stream.
+ */
+export function createFlightResolver(createFromFetch: CreateFromFetch): ResolveFrame {
+  return async (url, request) => {
+    const payload = await createFromFetch(
+      fetch(url, { ...request, headers: { Accept: RSC_CONTENT_TYPE } }),
+    );
+    if (payload.type === "action") {
+      throw new Error(`Expected ${url.href} to render, not run a server function`);
+    }
+    if (payload.type === "redirect") return Response.redirect(new URL(payload.location, url), 303);
+    return payload.root;
+  };
 }
 
 /**
@@ -65,111 +58,32 @@ export function createServerCallback({
 }
 
 /**
- * Hydrates the document, then handles same-origin links, form submissions, and history
- * traversals through the Navigation API by rendering the server's RSC payload for them. A link or
- * form with `data-target` loads into that named frame instead, from `data-src` when given.
- * Browsers without the Navigation API aren't supported.
+ * Hydrates the server-rendered document, then loads navigations, page reloads, and frame reloads
+ * through `resolveFrame`. Browsers without the Navigation API aren't supported.
  */
 export function hydrate({
-  createFromFetch,
   createFromReadableStream,
+  resolveFrame,
 }: {
-  createFromFetch: CreateFromFetch;
   createFromReadableStream: (stream: ReadableStream<Uint8Array>) => Promise<Payload>;
+  resolveFrame: ResolveFrame;
 }) {
-  if (!("navigation" in window)) {
-    throw new Error("react-server-frame requires a browser that supports the Navigation API");
-  }
-
   const initialPayload = createFromReadableStream(rscStream);
+  // Flight responses are thenables whose `then()` doesn't return a new promise.
+  const initialContent = Promise.resolve(initialPayload).then((payload) =>
+    payload.type === "render" ? payload.root : null,
+  );
+  const page = createPage(resolveFrame, initialContent);
+
   initialPayload.then(
     (payload) =>
-      hydrateRoot(
-        document,
-        <StrictMode>
-          <Content initialPayload={initialPayload} />
-        </StrictMode>,
-        { formState: payload.type === "render" ? payload.formState : undefined },
-      ),
+      hydrateRoot(document, page.element, {
+        formState: payload.type === "render" ? payload.formState : undefined,
+      }),
     (reason) => console.error("Failed to hydrate root", reason),
   );
 
-  /** Fetches the page at `url`, following a redirect payload instead of returning it. */
-  async function fetchPage(url: string, init: RequestInit) {
-    const payload = createFromFetch(fetch(url, { ...init, headers: { Accept: RSC_CONTENT_TYPE } }));
-    const resolved = await payload;
-    if (resolved.type === "redirect") {
-      window.navigation.navigate(resolved.location, { history: "replace" });
-      return undefined;
-    }
-    return { payload };
-  }
-
-  async function navigate(url: string, init: RequestInit) {
-    const page = await fetchPage(url, init);
-    if (page) await commit(page.payload);
-  }
-
-  // Like a frame's reload, the page's resolves once the new content has loaded: awaiting the
-  // commit would never finish inside an async transition, which holds updates until it ends.
-  setPageReload(async () => {
-    const page = await fetchPage(window.location.href, {});
-    if (page) void commit(page.payload);
-  });
-
-  window.navigation.addEventListener("navigate", (event) => {
-    if (
-      !event.canIntercept ||
-      event.hashChange ||
-      event.downloadRequest !== null ||
-      event.navigationType === "reload" ||
-      new URL(event.destination.url).origin !== window.location.origin
-    ) {
-      return;
-    }
-
-    const target = readFrameTarget(event);
-    if (target === null) return;
-
-    const init = { method: event.formData ? "POST" : "GET", body: event.formData };
-    event.intercept({
-      handler: target
-        ? () => target.frame.load(target.url, init)
-        : () => navigate(event.destination.url, { ...init, signal: event.signal }),
-    });
-  });
-
   if (import.meta.hot) {
-    import.meta.hot.on("rsc:update", () => navigate(window.location.href, {}));
+    import.meta.hot.on("rsc:update", () => page.reload());
   }
-}
-
-/**
- * Reads `data-target` and `data-src` from the link, submit button, or form that started a
- * navigation. Returns `undefined` when there's no target, so the page navigates as usual, and
- * `null` when the browser should navigate the document itself: the target frame isn't mounted, or
- * `data-src` isn't a same-origin URL.
- */
-function readFrameTarget(
-  event: NavigateEvent,
-): { frame: MountedFrame; url: URL } | null | undefined {
-  const source = event.sourceElement;
-  const form =
-    source instanceof HTMLFormElement
-      ? source
-      : source instanceof HTMLButtonElement || source instanceof HTMLInputElement
-        ? source.form
-        : null;
-  const read = (attribute: string) =>
-    source?.getAttribute(attribute) ?? form?.getAttribute(attribute) ?? null;
-
-  const src = read("data-src");
-  const url = URL.parse(src ?? event.destination.url, window.location.href);
-  if (!url || url.origin !== window.location.origin) return null;
-
-  const name = read("data-target");
-  if (name === null) return undefined;
-
-  const frame = namedFrames.get(name);
-  return frame ? { frame, url } : null;
 }

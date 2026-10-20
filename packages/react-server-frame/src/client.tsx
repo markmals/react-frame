@@ -1,34 +1,27 @@
 "use client";
 
-import {
-  createContext,
-  use,
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { use, useCallback, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import {
-  type Frame,
-  type FrameRequest,
-  type FrameRequestInit,
-  namedFrames,
-  topFrame,
+  detachedPage,
+  FrameContext,
+  FrameScopeContext,
+  loadFrameContent,
+  ResolveFrameContext,
+  useFrameScope,
+} from "./frame-context.tsx";
+import { type Frame, type FrameRequestInit, namedFrames } from "./frames.ts";
+
+export { ResolveFrameContext } from "./frame-context.tsx";
+export type {
+  Frame,
+  FrameRequest,
+  FrameRequestInit,
+  FrameResolution,
+  ResolveFrame,
 } from "./frames.ts";
-import { RSC_CONTENT_TYPE, type Payload } from "./protocol.ts";
-
-export type { Frame } from "./frames.ts";
-
-/** Fetches a route as an RSC payload for a frame. Supplied by the bundler integration. */
-export type FetchFrame = (url: URL, request: FrameRequest) => Promise<React.ReactNode>;
 
 type Content = React.ReactNode | Promise<React.ReactNode>;
-
-const FrameContext = createContext<Frame>(topFrame);
-FrameContext.displayName = "FrameContext";
 
 /**
  * Returns the frame that contains the calling component. Outside any `<Frame>`, that's the page
@@ -50,28 +43,48 @@ export function useFrames() {
   return frames;
 }
 
+/**
+ * Gives the page's frame its URL while the page renders on the server. In the browser the runtime
+ * provides the page's frame, and inside a `<Frame>` the frame's own applies, so it passes through.
+ */
+export function PageFrame({ children, src }: { children?: React.ReactNode; src: string }) {
+  const frame = use(FrameContext);
+  const page = useMemo(() => ({ ...detachedPage, src }), [src]);
+  return frame === detachedPage ? <FrameContext value={page}>{children}</FrameContext> : children;
+}
+
+/**
+ * Shows a frame's content and loads new content into it through the `resolveFrame` hook. `<Frame>`
+ * renders it; it's exported for tests that render frame content with their own resolver.
+ */
 export function ClientFrame({
   children,
-  fetchFrame,
   name,
   src,
 }: {
-  children?: React.ReactNode;
-  fetchFrame: FetchFrame;
+  /** The content to show first, or a promise of it, which suspends the frame until it settles. */
+  children?: Content;
   name?: string;
   src: string;
 }) {
+  const resolveFrame = use(ResolveFrameContext);
   const [content, setContent] = useState<Content>(children);
   const [currentSrc, setCurrentSrc] = useState(src);
   const [pending, startTransition] = useTransition();
 
-  // A server render of the surrounding page replaces content loaded in the browser.
+  // The surrounding content loading again (the page on the server, or a parent frame) replaces
+  // content loaded into this frame since.
   const [lastChildren, setLastChildren] = useState(children);
   if (lastChildren !== children) {
     setLastChildren(children);
     setContent(children);
     setCurrentSrc(src);
   }
+
+  const shown = useRef<Content>(content);
+  useLayoutEffect(() => {
+    shown.current = content;
+  }, [content]);
 
   const controllerRef = useRef<AbortController>(undefined);
   const latestLoadRef = useRef<Promise<void>>(undefined);
@@ -85,7 +98,12 @@ export function ClientFrame({
       const controller = new AbortController();
       controllerRef.current = controller;
 
-      const next = fetchFrame(url, { ...init, signal: controller.signal });
+      const next = loadFrameContent(
+        resolveFrame,
+        url,
+        { ...init, signal: controller.signal },
+        () => shown.current,
+      );
       const loaded = next.then(
         () => undefined,
         (error: unknown) => {
@@ -96,13 +114,11 @@ export function ClientFrame({
       );
       latestLoadRef.current = loaded;
 
-      startTransition(() => {
-        if (!init.method || init.method === "GET") setCurrentSrc(url.pathname + url.search);
-        setContent(next);
-      });
+      if (!init.method || init.method === "GET") setCurrentSrc(url.pathname + url.search);
+      startTransition(() => setContent(next));
       return loaded;
     },
-    [fetchFrame],
+    [resolveFrame],
   );
 
   const reload = useCallback(
@@ -110,7 +126,10 @@ export function ClientFrame({
     [load, currentSrc],
   );
 
-  const frame = useMemo(() => ({ pending, reload }), [pending, reload]);
+  const frame = useMemo(
+    () => ({ src: currentSrc, pending, reload }),
+    [currentSrc, pending, reload],
+  );
 
   useLayoutEffect(() => {
     if (name === undefined) return;
@@ -121,24 +140,13 @@ export function ClientFrame({
     };
   }, [name, frame, load]);
 
+  const scope = useFrameScope(content);
+
   return (
-    <FrameContext value={frame}>{content instanceof Promise ? use(content) : content}</FrameContext>
+    <FrameContext value={frame}>
+      <FrameScopeContext value={scope}>
+        {content instanceof Promise ? use(content) : content}
+      </FrameScopeContext>
+    </FrameContext>
   );
-}
-
-export async function fetchFramePayload(
-  url: URL,
-  { body, method, signal }: FrameRequest,
-  createFromFetch: (response: Promise<Response>) => Promise<Payload>,
-): Promise<React.ReactNode> {
-  const payload = await createFromFetch(
-    fetch(url, { method, body, headers: { Accept: RSC_CONTENT_TYPE }, signal }),
-  );
-  if (payload.type === "render") return payload.root;
-  if (payload.type === "action") {
-    throw new Error(`Expected ${url.href} to render a frame`);
-  }
-
-  await window.navigation.navigate(payload.location).finished;
-  return null;
 }

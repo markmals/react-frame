@@ -9,7 +9,22 @@ function getEntry(file: string) {
   return Vite.normalizePath(path.join(path.dirname(fileURLToPath(import.meta.url)), file));
 }
 
-export function reactServerFrame({ entry = "/src/entry.server" }: { entry?: string } = {}) {
+export function reactServerFrame({
+  entry = "/src/entry.server",
+  browserEntry,
+}: {
+  /** The server entry, which default-exports `{ fetch }`. */
+  entry?: string;
+  /**
+   * A browser entry to use instead of the built-in one, which calls `hydrate()` from
+   * `react-server-frame/vite/browser`. Supply one to pass `hydrate()` your own `resolveFrame`.
+   */
+  browserEntry?: string;
+} = {}) {
+  const clientEntry = browserEntry
+    ? Vite.normalizePath(path.resolve(browserEntry.replace(/^\//, "")))
+    : getEntry("entry.client.tsx");
+
   return [
     {
       name: "framework",
@@ -19,7 +34,7 @@ export function reactServerFrame({ entry = "/src/entry.server" }: { entry?: stri
         return {
           environments: {
             client: {
-              build: { rolldownOptions: { input: { index: getEntry("entry.client.tsx") } } },
+              build: { rolldownOptions: { input: { index: clientEntry } } },
             },
             rsc: {
               build: { rolldownOptions: { input: { index: entry } } },
@@ -36,7 +51,7 @@ export function reactServerFrame({ entry = "/src/entry.server" }: { entry?: stri
       async configEnvironment(name) {
         if (name !== "client") return;
 
-        const entries = new Set<string>([getEntry("entry.client.tsx")]);
+        const entries = new Set<string>([clientEntry]);
 
         try {
           for (const file of await findClientModules(".")) {

@@ -1,6 +1,5 @@
 import type { ReactFormState } from "react-dom/client";
 
-import type { FetchFrame } from "../client.tsx";
 import type { Payload } from "../protocol.ts";
 
 /** The React Flight APIs a bundler integration supplies to the server middleware and `<Frame>`. */
@@ -13,8 +12,6 @@ export interface ServerRuntime {
     body: string | FormData,
     options: { temporaryReferences: unknown },
   ) => Promise<unknown[]>;
-  /** Client reference passed to frames so the browser can reload them. */
-  fetchFrame: FetchFrame;
   loadServerAction: (id: string) => Promise<Function>;
   /** Renders an RSC stream to an HTML document response. */
   renderHtml: (

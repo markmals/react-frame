@@ -21,7 +21,7 @@
     ".": "./dist/index.mjs",
     "./browser": "./dist/browser.mjs",
     "./client": "./dist/client.mjs",
-    "./vite/fetch-frame": "./dist/vite/fetch-frame.mjs",
+    "./vite/browser": "./dist/vite/browser.mjs",
     "./vite/plugin": "./dist/vite/plugin.mjs",
     "./vite/server": "./dist/vite/server.mjs",
     "./package.json": "./package.json"

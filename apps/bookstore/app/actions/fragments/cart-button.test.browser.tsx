@@ -1,4 +1,4 @@
-import { ClientFrame, type FetchFrame } from "react-server-frame/client";
+import { ClientFrame, type ResolveFrame, ResolveFrameContext } from "react-server-frame/client";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { page } from "vite-plus/test/browser";
 
@@ -13,12 +13,14 @@ describe("CartButton", () => {
     let action = Promise.withResolvers<void>();
     vi.mocked(toggleCart).mockReturnValue(action.promise);
     let reload = Promise.withResolvers<React.ReactNode>();
-    let fetchFrame = vi.fn<FetchFrame>(() => reload.promise);
+    let resolveFrame = vi.fn<ResolveFrame>(() => reload.promise);
 
     render(
-      <ClientFrame src="/fragments/cart-button/1" fetchFrame={fetchFrame}>
-        <CartButton inCart={false} id={1} slug="bbq" />
-      </ClientFrame>,
+      <ResolveFrameContext value={resolveFrame}>
+        <ClientFrame src="/fragments/cart-button/1">
+          <CartButton inCart={false} id={1} slug="bbq" />
+        </ClientFrame>
+      </ResolveFrameContext>,
     );
     let button = page.getByRole("button");
     await expect.element(button).toHaveTextContent("Add to Cart");
@@ -28,8 +30,8 @@ describe("CartButton", () => {
     expect(vi.mocked(toggleCart).mock.calls[0]![0].get("bookId")).toBe("1");
 
     action.resolve();
-    await vi.waitFor(() => expect(fetchFrame).toHaveBeenCalledOnce());
-    expect(fetchFrame.mock.calls[0]![0].pathname).toBe("/fragments/cart-button/1");
+    await vi.waitFor(() => expect(resolveFrame).toHaveBeenCalledOnce());
+    expect(resolveFrame.mock.calls[0]![0].pathname).toBe("/fragments/cart-button/1");
     await expect.element(button).toHaveTextContent("Saving...");
 
     reload.resolve(<CartButton inCart id={1} slug="bbq" />);

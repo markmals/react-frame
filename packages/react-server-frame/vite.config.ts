@@ -9,7 +9,7 @@ export default defineConfig({
       index: "./src/index.ts",
       browser: "./src/browser.tsx",
       client: "./src/client.tsx",
-      "vite/fetch-frame": "./src/vite/fetch-frame.ts",
+      "vite/browser": "./src/vite/browser.ts",
       "vite/plugin": "./src/vite/plugin.ts",
       "vite/server": "./src/vite/server.ts",
     },
