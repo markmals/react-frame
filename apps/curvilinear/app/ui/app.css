@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans:
+    "Inter var", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+
+  /* Linear's UI is denser than Tailwind's defaults; the whole app sits between 11px and 17px. */
+  --text-*: initial;
+  --text-xs: 0.6875rem;
+  --text-sm: 0.75rem;
+  --text-base: 0.8125rem;
+  --text-md: 0.875rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.3125rem;
+
+  --leading-body: 1.5;
+  --leading-prose: 1.65;
+
+  --color-canvas: #ffffff;
+  --color-sidebar: #f7f8f8;
+  --color-line: #e9e9eb;
+  --color-line-strong: #d5d6d9;
+  --color-hover: #f1f1f3;
+  --color-active: #e8e8ec;
+  --color-ink: #282a30;
+  --color-muted: #6b6f76;
+  --color-faint: #70757e;
+
+  --color-brand: #5e6ad2;
+  --color-brand-hover: #4f5ac0;
+  --color-brand-soft: #eceefb;
+  --color-danger: #c52828;
+  --color-danger-hover: #a92222;
+  --color-danger-soft: #fdeeee;
+
+  --color-status-backlog: #bec2c8;
+  --color-status-todo: #8a8f98;
+  --color-status-progress: #f2c94c;
+  --color-status-done: #5e6ad2;
+  --color-status-canceled: #95a2b3;
+
+  --spacing-sidebar: 15rem;
+  --spacing-row: 2.5rem;
+  --spacing-topbar: 3.25rem;
+  --spacing-menu: 13.5rem;
+  --spacing-dialog: 36rem;
+  --spacing-detail-aside: 15rem;
+
+  --radius-control: 0.3125rem;
+
+  --shadow-popover:
+    0 1px 2px rgb(0 0 0 / 0.08), 0 8px 24px rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.04);
+  --shadow-dialog: 0 8px 40px rgb(0 0 0 / 0.2), 0 0 0 1px rgb(0 0 0 / 0.06);
+
+  --default-transition-duration: 120ms;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-body);
+    color: var(--color-ink);
+    background: var(--color-canvas);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button:not(:disabled),
+  summary,
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* The dropdowns are <details> so they open and close without JavaScript. */
+  summary {
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 1px;
+  }
+}
+
+@layer components {
+  /* Markdown-ish comment and description bodies, which come from a plain textarea. */
+  .prose-body {
+    line-height: var(--leading-prose);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
