@@ -7,30 +7,37 @@ export function AboutPage() {
       <div className="card">
         <h1>About Our Bookstore</h1>
         <p className="my-4">
-          Welcome to our online bookstore, a demo application built to showcase the capabilities of
-          <strong>fetch-router</strong> - a powerful, type-safe routing library for web
-          applications.
+          Welcome to our online bookstore, a port of the Remix 3 bookstore demo to React Server
+          Components. Remix's router still handles every request, from typed routes to middleware
+          and sessions. The pages are React components rendered on the server by{" "}
+          <strong>react-server-frame</strong>.
         </p>
 
         <h2 className="mt-6 mb-2">What This Demo Shows</h2>
         <ul className="ml-8 leading-loose">
           <li>
-            <strong>Resource Routes:</strong> Full RESTful CRUD operations
+            <strong>Typed Routes:</strong> Nested resources with custom parameters (slug, orderId,
+            etc.), type checked from route to link
           </li>
           <li>
-            <strong>Nested Routes:</strong> Deep route hierarchies with type safety
+            <strong>Middleware:</strong> Authentication and authorization before every page and
+            frame
           </li>
           <li>
-            <strong>Custom Parameters:</strong> Flexible parameter naming (slug, orderId, etc.)
+            <strong>Server Components:</strong> Async components that load their own data, so the
+            genre list and the book grid query in parallel
           </li>
           <li>
-            <strong>HTTP Methods:</strong> GET, POST, PUT, DELETE properly used
+            <strong>Frames:</strong> The cart button and cart table are routes rendered in place,
+            and each reloads on its own after a change
           </li>
           <li>
-            <strong>Middleware:</strong> Authentication and authorization
+            <strong>Server Functions:</strong> Every form that changes data calls one, and still
+            works before JavaScript loads
           </li>
           <li>
-            <strong>Type Safety:</strong> End-to-end type checking for routes and handlers
+            <strong>Navigation:</strong> Links and the search form load new pages through the
+            Navigation API, without reloading the document
           </li>
         </ul>
 
