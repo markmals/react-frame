@@ -11,7 +11,13 @@ import {
   useTransition,
 } from "react";
 
-import { type Frame, type FrameRequest, type FrameRequestInit, namedFrames } from "./frames.ts";
+import {
+  type Frame,
+  type FrameRequest,
+  type FrameRequestInit,
+  namedFrames,
+  topFrame,
+} from "./frames.ts";
 import { RSC_CONTENT_TYPE, type Payload } from "./protocol.ts";
 
 export type { Frame } from "./frames.ts";
@@ -21,16 +27,15 @@ export type FetchFrame = (url: URL, request: FrameRequest) => Promise<React.Reac
 
 type Content = React.ReactNode | Promise<React.ReactNode>;
 
-const FrameContext = createContext<Frame | undefined>(undefined);
+const FrameContext = createContext<Frame>(topFrame);
 FrameContext.displayName = "FrameContext";
 
-/** Returns the frame that contains the calling component. */
+/**
+ * Returns the frame that contains the calling component. Outside any `<Frame>`, that's the page
+ * itself, whose `reload()` renders the current URL again.
+ */
 export function useFrame(): Frame {
-  const frame = use(FrameContext);
-  if (!frame) {
-    throw new Error("useFrame() must be called inside a <Frame>");
-  }
-  return frame;
+  return use(FrameContext);
 }
 
 const frames = {

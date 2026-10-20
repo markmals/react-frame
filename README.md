@@ -65,7 +65,7 @@ A frame is resolved by sending a subrequest through the router, so its route run
 
 ### Reload frames
 
-Frames are independently reloadable sections of the page. `reload()` fetches the frame's route again and resolves once the new content has loaded. Inside a transition, React shows it when the transition finishes, so pending state and new content appear together.
+Frames are independently reloadable sections of the page. `reload()` fetches the frame's route again and resolves once the new content has loaded. Inside a transition, React shows it when the transition finishes, so pending state and new content appear together. Outside any `<Frame>`, `useFrame()` returns the page itself, and its `reload()` renders the current URL again.
 
 ```tsx
 "use client";

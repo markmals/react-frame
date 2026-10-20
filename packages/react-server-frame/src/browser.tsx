@@ -2,7 +2,7 @@ import { startTransition, StrictMode, use, useLayoutEffect, useState } from "rea
 import { hydrateRoot } from "react-dom/client";
 import { rscStream } from "rsc-html-stream/client";
 
-import { type MountedFrame, namedFrames } from "./frames.ts";
+import { type MountedFrame, namedFrames, setPageReload } from "./frames.ts";
 import { ACTION_ID_HEADER, RSC_CONTENT_TYPE, type Payload } from "./protocol.ts";
 
 type CreateFromFetch = (response: Promise<Response>, options?: object) => Promise<Payload>;
@@ -94,15 +94,28 @@ export function hydrate({
     (reason) => console.error("Failed to hydrate root", reason),
   );
 
-  async function navigate(url: string, init: RequestInit) {
+  /** Fetches the page at `url`, following a redirect payload instead of returning it. */
+  async function fetchPage(url: string, init: RequestInit) {
     const payload = createFromFetch(fetch(url, { ...init, headers: { Accept: RSC_CONTENT_TYPE } }));
     const resolved = await payload;
     if (resolved.type === "redirect") {
       window.navigation.navigate(resolved.location, { history: "replace" });
-      return;
+      return undefined;
     }
-    await commit(payload);
+    return { payload };
   }
+
+  async function navigate(url: string, init: RequestInit) {
+    const page = await fetchPage(url, init);
+    if (page) await commit(page.payload);
+  }
+
+  // Like a frame's reload, the page's resolves once the new content has loaded: awaiting the
+  // commit would never finish inside an async transition, which holds updates until it ends.
+  setPageReload(async () => {
+    const page = await fetchPage(window.location.href, {});
+    if (page) void commit(page.payload);
+  });
 
   window.navigation.addEventListener("navigate", (event) => {
     if (

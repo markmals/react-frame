@@ -25,3 +25,17 @@ export interface MountedFrame extends Frame {
 
 /** Frames given a `name`, while they're mounted in the browser. */
 export const namedFrames = new Map<string, MountedFrame>();
+
+let reloadPage = (): Promise<void> =>
+  Promise.reject(new Error("The page can only reload once the browser runtime has hydrated it"));
+
+/**
+ * The page itself, which `useFrame()` returns outside any `<Frame>`. Reloading it renders the
+ * current URL again. Its `pending` is always `false`.
+ */
+export const topFrame: Frame = { pending: false, reload: () => reloadPage() };
+
+/** Sets how the top frame reloads. The browser runtime calls this when it hydrates. */
+export function setPageReload(reload: () => Promise<void>) {
+  reloadPage = reload;
+}
