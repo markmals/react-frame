@@ -1,4 +1,4 @@
-import { createFromReadableStream } from "@vitejs/plugin-rsc/ssr";
+import { createFromReadableStream, getClientEntryUrl } from "@vitejs/plugin-rsc/ssr";
 import { use } from "react";
 import { renderToReadableStream } from "react-dom/server";
 import { injectRSCPayload } from "rsc-html-stream/server";
@@ -30,12 +30,10 @@ export async function prerender(body: ReadableStream<Uint8Array>) {
 
   let notFoundError = false;
   try {
-    const bootstrapScriptContent = await import.meta.viteRsc.loadBootstrapScriptContent("index");
-
     const payload = await createFromReadableStream<Payload>(formStateBody);
 
     const html = await renderToReadableStream(<Content />, {
-      bootstrapScriptContent,
+      bootstrapModules: [getClientEntryUrl()],
       formState: payload.formState,
       onError(reason: unknown) {
         if (
