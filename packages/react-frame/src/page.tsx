@@ -154,18 +154,47 @@ export function createPage(resolveFrame: ResolveFrame, content: Content): Page {
         return;
       }
 
-      const target = readFrameTarget(event);
+      const replay = event.info instanceof ReplayedSubmission ? event.info : undefined;
+      const target = replay ? replay.target : readFrameTarget(event);
       if (target === null) return;
 
-      const init = { method: event.formData ? "POST" : "GET", body: event.formData };
-      event.intercept({
-        handler: target
-          ? () => target.frame.load(target.url, init)
-          : async () => {
-              const loaded = await load(new URL(event.destination.url), init, event.signal);
-              await loaded?.committed;
-            },
-      });
+      const body = replay ? replay.body : event.formData;
+      const init = { method: body ? "POST" : "GET", body };
+      const handler = target
+        ? () => target.frame.load(target.url, init)
+        : async () => {
+            const loaded = await load(new URL(event.destination.url), init, event.signal);
+            await loaded?.committed;
+          };
+
+      // A submission to the current URL replaces its entry instead of stacking a copy of it.
+      if (
+        !replay &&
+        body &&
+        event.navigationType === "push" &&
+        event.destination.url === window.navigation.currentEntry?.url
+      ) {
+        const supportsPrecommit =
+          typeof Reflect.get(window, "NavigationPrecommitController") === "function";
+        if (!supportsPrecommit && event.cancelable) {
+          // Without precommit handlers an intercepted navigation keeps its history behavior, so
+          // submit again as a replacing navigation, which can't carry the form data itself.
+          event.preventDefault();
+          window.navigation.navigate(event.destination.url, {
+            history: "replace",
+            info: new ReplayedSubmission(body, target),
+          });
+          return;
+        }
+        event.intercept({
+          handler,
+          precommitHandler: (controller) =>
+            controller.redirect(event.destination.url, { history: "replace" }),
+        });
+        return;
+      }
+
+      event.intercept({ handler });
     },
     { signal: listening.signal },
   );
@@ -181,15 +210,23 @@ export function createPage(resolveFrame: ResolveFrame, content: Content): Page {
   };
 }
 
+type FrameTarget = { frame: MountedFrame; url: URL };
+
+/** A same-URL form submission, navigated again so it replaces its history entry. */
+class ReplayedSubmission {
+  constructor(
+    readonly body: FormData,
+    readonly target: FrameTarget | undefined,
+  ) {}
+}
+
 /**
  * Reads `data-target` and `data-src` from the link, submit button, or form that started a
  * navigation. Returns `undefined` when there's no target, so the page navigates as usual, and
  * `null` when the browser should navigate the document itself: the target frame isn't mounted, or
  * `data-src` isn't a same-origin URL.
  */
-function readFrameTarget(
-  event: NavigateEvent,
-): { frame: MountedFrame; url: URL } | null | undefined {
+function readFrameTarget(event: NavigateEvent): FrameTarget | null | undefined {
   const source = event.sourceElement;
   const form =
     source instanceof HTMLFormElement

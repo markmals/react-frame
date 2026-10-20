@@ -144,7 +144,7 @@ export function AddToCart({ bookId }: { bookId: string }) {
 
 ### Navigation
 
-The browser runtime requires the [Navigation API](https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API), which it uses to handle same-origin links, form submissions, redirects, and back/forward navigation without reloading the document. `hydrate()` throws in browsers without it.
+The browser runtime requires the [Navigation API](https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API), which it uses to handle same-origin links, form submissions, redirects, and back/forward navigation without reloading the document. `hydrate()` throws in browsers without it. A form submitted to the URL it's on replaces that history entry instead of adding a second one, so going back leaves the page.
 
 A link or form with `data-target` loads into the mounted frame with that name instead of the whole page, while the address bar still moves to its destination. `data-src` sets the URL the frame loads, when it differs from the destination:
 
