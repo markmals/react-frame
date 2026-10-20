@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { startTransition, useOptimistic } from "react";
 import { useFrame } from "react-frame/client";
 
 import { routes } from "../../routes.ts";
@@ -24,8 +24,10 @@ type PendingAction = { type: "update" | "remove"; bookId: number };
 
 export function CartItems({ items, total, canCheckout }: CartItemsProps) {
   let frame = useFrame();
-  let [isPending, startTransition] = useTransition();
-  let [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  // Set inside the transition, so it shows which row is pending until the mutation and the frame's
+  // reload finish, then falls back to null by itself.
+  let [pendingAction, setPendingAction] = useOptimistic<PendingAction | null>(null);
+  let isPending = pendingAction !== null;
 
   // Without JavaScript the browser submits each form's server function and loads the page again.
   // With it, like the demo, run the mutation and then reload this frame while showing which row
@@ -39,8 +41,8 @@ export function CartItems({ items, total, canCheckout }: CartItemsProps) {
     if (isPending) return;
 
     let formData = new FormData(event.currentTarget);
-    setPendingAction(nextAction);
     startTransition(async () => {
+      setPendingAction(nextAction);
       await action(formData);
       await frame.reload();
     });
@@ -64,8 +66,7 @@ export function CartItems({ items, total, canCheckout }: CartItemsProps) {
         </thead>
         <tbody>
           {items.map((item) => {
-            let rowAction =
-              isPending && pendingAction?.bookId === item.bookId ? pendingAction.type : null;
+            let rowAction = pendingAction?.bookId === item.bookId ? pendingAction.type : null;
 
             return (
               <tr key={item.bookId}>
