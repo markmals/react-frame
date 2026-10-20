@@ -1,0 +1,41 @@
+{
+  "name": "trellix",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db:migrate": "remix db migrate",
+    "db:reset": "remix db reset --force",
+    "db:rollback": "remix db rollback",
+    "db:seed": "remix db seed",
+    "db:status": "remix db status",
+    "dev": "vp dev",
+    "build": "tsc && vp build",
+    "check": "vp check",
+    "start": "node server.ts",
+    "test": "vp test"
+  },
+  "dependencies": {
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-frame": "workspace:",
+    "react-server-dom-webpack": "catalog:",
+    "remix": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "@types/dom-navigation": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitejs/plugin-rsc": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
+    "linkedom": "catalog:",
+    "oxc-transform-react": "catalog:",
+    "playwright": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}
