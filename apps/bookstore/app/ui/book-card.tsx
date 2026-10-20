@@ -1,4 +1,4 @@
-import { Frame } from "react-server-frame";
+import { Frame } from "react-frame";
 
 import type { Book } from "../data/schema.ts";
 import { routes } from "../routes.ts";

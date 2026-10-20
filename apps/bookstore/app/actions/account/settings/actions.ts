@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "react-server-frame";
+import { redirect } from "react-frame";
 import * as s from "remix/data-schema";
 import { minLength } from "remix/data-schema/checks";
 import * as f from "remix/data-schema/form-data";

@@ -1,4 +1,4 @@
-import { render, serverActions } from "react-server-frame/vite/server";
+import { render, serverActions } from "react-frame/vite/server";
 import { asyncContext } from "remix/middleware/async-context";
 import { compression } from "remix/middleware/compression";
 import { logger } from "remix/middleware/logger";

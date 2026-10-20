@@ -1,4 +1,4 @@
-import { ClientFrame, type ResolveFrame, ResolveFrameContext } from "react-server-frame/client";
+import { ClientFrame, type ResolveFrame, ResolveFrameContext } from "react-frame/client";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { page } from "vite-plus/test/browser";
 

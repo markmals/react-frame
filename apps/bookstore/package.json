@@ -17,8 +17,8 @@
   "dependencies": {
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-frame": "workspace:",
     "react-server-dom-webpack": "catalog:",
-    "react-server-frame": "workspace:",
     "remix": "catalog:"
   },
   "devDependencies": {

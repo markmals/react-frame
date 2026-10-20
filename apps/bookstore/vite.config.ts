@@ -1,7 +1,7 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import rsc from "@vitejs/plugin-rsc";
-import { reactServerFrame } from "react-server-frame/vite/plugin";
+import { reactFrame } from "react-frame/vite/plugin";
 import { defineConfig } from "vite-plus";
 import { playwright } from "vite-plus/test/browser-playwright";
 
@@ -10,7 +10,7 @@ export default defineConfig({
     port: 44100,
   },
   plugins: [
-    reactServerFrame({ entry: "/app/entry.server.ts" }),
+    reactFrame({ entry: "/app/entry.server.ts" }),
     tailwindcss(),
     react({ compiler: true }),
     rsc(),

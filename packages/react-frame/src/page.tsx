@@ -50,7 +50,7 @@ export interface Page {
  */
 export function createPage(resolveFrame: ResolveFrame, content: Content): Page {
   if (!("navigation" in window)) {
-    throw new Error("react-server-frame requires a browser that supports the Navigation API");
+    throw new Error("react-frame requires a browser that supports the Navigation API");
   }
 
   let status: PageStatus = {

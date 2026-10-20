@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useFrame } from "react-server-frame/client";
+import { useFrame } from "react-frame/client";
 
 import { routes } from "../../routes.ts";
 import { removeCartItem, updateCartItem } from "../cart/api/actions.ts";

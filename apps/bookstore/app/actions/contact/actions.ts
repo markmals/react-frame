@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "react-server-frame";
+import { redirect } from "react-frame";
 import { getContext } from "remix/middleware/async-context";
 
 import { routes } from "../../routes.ts";

@@ -2,7 +2,7 @@
 
 import { startTransition } from "react";
 import { useFormStatus } from "react-dom";
-import { useFrame } from "react-server-frame/client";
+import { useFrame } from "react-frame/client";
 
 import { toggleCart } from "../api/actions.ts";
 

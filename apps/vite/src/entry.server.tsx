@@ -1,4 +1,4 @@
-import { render, serverActions } from "react-server-frame/vite/server";
+import { render, serverActions } from "react-frame/vite/server";
 import { useCacheMiddleware } from "vite-plugin-react-use-cache/remix";
 
 import { createCookie } from "remix/cookie";

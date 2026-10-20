@@ -1,16 +1,16 @@
 {
-  "name": "react-server-frame",
+  "name": "react-frame",
   "version": "0.0.10",
   "description": "A new type of RSC routing.",
-  "homepage": "https://github.com/jacob-ebey/react-server-frame#readme",
+  "homepage": "https://github.com/markmals/react-frame#readme",
   "bugs": {
-    "url": "https://github.com/jacob-ebey/react-server-frame/issues"
+    "url": "https://github.com/markmals/react-frame/issues"
   },
   "license": "MIT",
   "author": "Jacob Ebey <jacob.ebey@live.com>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jacob-ebey/react-server-frame.git"
+    "url": "git+https://github.com/markmals/react-frame.git"
   },
   "files": [
     "dist",

@@ -1,4 +1,4 @@
-import { Frame } from "react-server-frame";
+import { Frame } from "react-frame";
 
 import { routes } from "../../routes.ts";
 import { Layout } from "../../ui/layout.tsx";

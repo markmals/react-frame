@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "react-server-frame";
+import { redirect } from "react-frame";
 import * as s from "remix/data-schema";
 import * as f from "remix/data-schema/form-data";
 import { getContext } from "remix/middleware/async-context";

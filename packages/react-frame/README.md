@@ -9,11 +9,11 @@ New type of RSC routing inspired by iFrames and Remix 3. Routes are plain [Remix
 ```ts
 import react from "@vitejs/plugin-react";
 import rsc from "@vitejs/plugin-rsc";
-import { reactServerFrame } from "react-server-frame/vite/plugin";
+import { reactFrame } from "react-frame/vite/plugin";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [reactServerFrame({ entry: "/app/entry.server.ts" }), react(), rsc()],
+  plugins: [reactFrame({ entry: "/app/entry.server.ts" }), react(), rsc()],
 });
 ```
 
@@ -25,7 +25,7 @@ The entry module default-exports `{ fetch }`, usually your router's `fetch`.
 import { asyncContext } from "remix/middleware/async-context";
 import { session } from "remix/middleware/session";
 import { createRouter } from "remix/router";
-import { render, serverActions } from "react-server-frame/vite/server";
+import { render, serverActions } from "react-frame/vite/server";
 
 const router = createRouter({
   middleware: [render(), asyncContext(), session(cookie, storage), serverActions()],
@@ -54,7 +54,7 @@ router.map(routes, {
 ### Nest frames
 
 ```tsx
-import { Frame } from "react-server-frame";
+import { Frame } from "react-frame";
 
 <Suspense fallback={<p>Loading sidebar...</p>}>
   <Frame name="sidebar" src={routes.sidebar.href()} />
@@ -72,7 +72,7 @@ Outside any `<Frame>`, `useFrame()` returns the page itself: its `src` and `pend
 ```tsx
 "use client";
 
-import { useFrame, useFrames } from "react-server-frame/client";
+import { useFrame, useFrames } from "react-frame/client";
 
 export function ReloadButtons() {
   // The frame that contains this component.
@@ -94,7 +94,7 @@ export function ReloadButtons() {
 ```tsx
 "use server";
 
-import { redirect } from "react-server-frame";
+import { redirect } from "react-frame";
 
 export async function addToCart(formData: FormData) {
   // ...update the session or database...
@@ -114,7 +114,7 @@ With JavaScript, a server function call responds with its result only; the page 
 "use client";
 
 import { startTransition } from "react";
-import { useFrame } from "react-server-frame/client";
+import { useFrame } from "react-frame/client";
 
 import { addToCart } from "./actions.ts";
 
@@ -168,7 +168,7 @@ The default hook fetches the route's RSC payload, which the server's router rend
 
 ```tsx
 // app/entry.browser.tsx
-import { hydrate, resolveFrame } from "react-server-frame/vite/browser";
+import { hydrate, resolveFrame } from "react-frame/vite/browser";
 
 hydrate({
   resolveFrame(url, request) {
@@ -179,13 +179,13 @@ hydrate({
 ```
 
 ```ts
-reactServerFrame({ entry: "/app/entry.server.ts", browserEntry: "/app/entry.browser.tsx" });
+reactFrame({ entry: "/app/entry.server.ts", browserEntry: "/app/entry.browser.tsx" });
 ```
 
 Tests can render a client component inside a frame and stand in for the hook with `ResolveFrameContext`:
 
 ```tsx
-import { ClientFrame, ResolveFrameContext } from "react-server-frame/client";
+import { ClientFrame, ResolveFrameContext } from "react-frame/client";
 
 render(
   <ResolveFrameContext value={() => <CartButton inCart />}>

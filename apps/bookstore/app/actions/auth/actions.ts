@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "react-server-frame";
+import { redirect } from "react-frame";
 import { completeAuth, verifyCredentials } from "remix/auth";
 import * as s from "remix/data-schema";
 import { getContext } from "remix/middleware/async-context";

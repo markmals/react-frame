@@ -10,7 +10,7 @@ export function AboutPage() {
           Welcome to our online bookstore, a port of the Remix 3 bookstore demo to React Server
           Components. Remix's router still handles every request, from typed routes to middleware
           and sessions. The pages are React components rendered on the server by{" "}
-          <strong>react-server-frame</strong>.
+          <strong>react-frame</strong>.
         </p>
 
         <h2 className="mt-6 mb-2">What This Demo Shows</h2>

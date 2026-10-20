@@ -9,7 +9,7 @@ function getEntry(file: string) {
   return Vite.normalizePath(path.join(path.dirname(fileURLToPath(import.meta.url)), file));
 }
 
-export function reactServerFrame({
+export function reactFrame({
   entry = "/src/entry.server",
   browserEntry,
 }: {
@@ -17,7 +17,7 @@ export function reactServerFrame({
   entry?: string;
   /**
    * A browser entry to use instead of the built-in one, which calls `hydrate()` from
-   * `react-server-frame/vite/browser`. Supply one to pass `hydrate()` your own `resolveFrame`.
+   * `react-frame/vite/browser`. Supply one to pass `hydrate()` your own `resolveFrame`.
    */
   browserEntry?: string;
 } = {}) {

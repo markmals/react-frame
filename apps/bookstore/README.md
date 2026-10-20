@@ -1,6 +1,6 @@
 # Bookstore
 
-A port of the [Remix 3 bookstore demo](https://github.com/remix-run/remix/tree/main/demos/bookstore) to React Server Components with `react-server-frame`. You can browse books, manage a cart, check out, update your account, and run the store from an admin area. Routes, controllers, middleware, data, and sessions follow the demo; pages render with React, mutations are React server functions, and every form still works before JavaScript loads.
+A port of the [Remix 3 bookstore demo](https://github.com/remix-run/remix/tree/main/demos/bookstore) to React Server Components with `react-frame`. You can browse books, manage a cart, check out, update your account, and run the store from an admin area. Routes, controllers, middleware, data, and sessions follow the demo; pages render with React, mutations are React server functions, and every form still works before JavaScript loads.
 
 ## Run It
 

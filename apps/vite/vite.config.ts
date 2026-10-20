@@ -1,7 +1,7 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import rsc from "@vitejs/plugin-rsc";
-import { reactServerFrame } from "react-server-frame/vite/plugin";
+import { reactFrame } from "react-frame/vite/plugin";
 import devtoolsJson from "vite-plugin-devtools-json";
 import { useCachePlugin } from "vite-plugin-react-use-cache";
 import { defineConfig } from "vite-plus";
@@ -14,7 +14,7 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   plugins: [
-    reactServerFrame(),
+    reactFrame(),
     tailwindcss(),
     react({ compiler: true }),
     rsc(),
