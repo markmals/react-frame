@@ -23,7 +23,7 @@ export async function logoutAction(): Promise<LogoutResult> {
     const session = getContext().get(Session);
     session.unset("auth");
     session.regenerateId();
-    redirect(routes.frames.home.href());
+    redirect(routes.home.href());
     return {
       success: true,
       message: "Redirecting...",
@@ -66,7 +66,7 @@ export async function loginAction(_: unknown, formData: FormData): Promise<Login
     const session = context.get(Session);
     session.regenerateId();
     session.set("auth", { username: identity.username } satisfies AuthSession);
-    redirect(routes.frames.home.href());
+    redirect(routes.home.href());
   } catch (reason) {
     console.error(reason);
     return {

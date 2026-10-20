@@ -1,5 +1,4 @@
-import { lazy } from "react";
-import { mapFrames, useServerMiddleware } from "react-server-frame/vite/frames";
+import { render, serverActions } from "react-server-frame/vite/server";
 import { useCacheMiddleware } from "vite-plugin-react-use-cache/remix";
 
 import { createCookie } from "remix/cookie";
@@ -12,11 +11,10 @@ import { createRouter, type RouterContext } from "remix/router";
 import { createCookieSessionStorage } from "remix/session-storage/cookie";
 
 import { sessionSecret } from "@/env";
-import { routes } from "@/routes";
+import Home from "@/frames/home";
+import Protected from "@/frames/protected";
 import { authMiddleware } from "@/lib/auth";
-
-const Home = lazy(() => import("@/frames/home"));
-const Protected = lazy(() => import("@/frames/protected"));
+import { routes } from "@/routes";
 
 const sessionCookie = createCookie("__session", {
   secrets: [sessionSecret],
@@ -28,7 +26,14 @@ const sessionCookie = createCookie("__session", {
 const sessionStorage = createCookieSessionStorage();
 
 const router = createRouter({
-  middleware: [asyncContext(), session(sessionCookie, sessionStorage), authMiddleware()],
+  middleware: [
+    asyncContext(),
+    session(sessionCookie, sessionStorage),
+    authMiddleware(),
+    useCacheMiddleware(createMemoryFileStorage()),
+    render(),
+    serverActions(),
+  ],
 });
 
 export type AppContext = RouterContext<typeof router>;
@@ -39,19 +44,22 @@ declare module "remix" {
   }
 }
 
-mapFrames(router, routes.frames, {
-  middleware: [useCacheMiddleware(createMemoryFileStorage()), useServerMiddleware()],
-  components: {
-    home: Home,
+router.map(routes, {
+  actions: {
+    home({ render }) {
+      return render(<Home />);
+    },
     protected: {
       middleware: [
         requireAuth({
           onFailure() {
-            return redirect(routes.frames.home.href());
+            return redirect(routes.home.href());
           },
         }),
       ],
-      component: Protected,
+      handler({ render }) {
+        return render(<Protected />);
+      },
     },
   },
 });

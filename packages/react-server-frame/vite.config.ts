@@ -6,12 +6,12 @@ export default defineConfig({
     dts: true,
     exports: true,
     entry: {
-      index: "./src/frames.tsx",
+      index: "./src/index.ts",
       browser: "./src/browser.tsx",
-      client: "./src/frames.client.tsx",
+      client: "./src/client.tsx",
       "vite/fetch-frame": "./src/vite/fetch-frame.ts",
-      "vite/frames": "./src/vite/frames.tsx",
       "vite/plugin": "./src/vite/plugin.ts",
+      "vite/server": "./src/vite/server.ts",
     },
     hooks: {
       async "build:done"() {

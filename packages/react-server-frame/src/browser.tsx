@@ -1,161 +1,128 @@
-import { startTransition, StrictMode, use, useState } from "react";
+import { startTransition, StrictMode, use, useLayoutEffect, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { rscStream } from "rsc-html-stream/client";
 
-import type { Payload } from "./generic-payload.ts";
+import { ACTION_ID_HEADER, RSC_CONTENT_TYPE, type Payload } from "./protocol.ts";
 
-let setPayload: (payload: Promise<Payload>) => void;
+type CreateFromFetch = (response: Promise<Response>, options?: object) => Promise<Payload>;
 
+type SetPayload = (payload: Promise<Payload>) => void;
+
+const { promise: hydrated, resolve: setHydrated } = Promise.withResolvers<SetPayload>();
+const commits = new WeakMap<Promise<Payload>, () => void>();
+
+function Content({ initialPayload }: { initialPayload: Promise<Payload> }) {
+  const [payload, setPayload] = useState(initialPayload);
+
+  useLayoutEffect(() => setHydrated(setPayload), []);
+  useLayoutEffect(() => commits.get(payload)?.(), [payload]);
+
+  const { root } = use(payload) as Extract<Payload, { type: "render" }>;
+  return root;
+}
+
+/** Shows a resolved payload, returning a promise that settles once React commits it. */
+async function commit(payload: Promise<Payload>) {
+  const setPayload = await hydrated;
+  const committed = new Promise<void>((resolve) => commits.set(payload, resolve));
+  startTransition(() => setPayload(payload));
+  return committed;
+}
+
+function redirect(location: string, history: NavigationHistoryBehavior) {
+  if (window.navigation) {
+    window.navigation.navigate(location, { history });
+  } else {
+    window.location.assign(location);
+  }
+}
+
+/** Calls server functions at the current URL and shows the page the server renders afterwards. */
 export function createServerCallback({
   createFromFetch,
   createTemporaryReferenceSet,
   encodeReply,
 }: {
-  createFromFetch: (response: Promise<Response>, options?: object) => Promise<Payload>;
+  createFromFetch: CreateFromFetch;
   createTemporaryReferenceSet: () => unknown;
-  encodeReply: (v: unknown[], options?: object) => Promise<string | FormData>;
+  encodeReply: (value: unknown[], options: { temporaryReferences: unknown }) => Promise<BodyInit>;
 }) {
   return async (id: string, args: unknown[]) => {
-    const url = new URL(window.location.href);
-    url.pathname += ".rsc";
     const temporaryReferences = createTemporaryReferenceSet();
-    const payload = await createFromFetch(
-      fetch(url, {
-        method: "POST",
-        body: await encodeReply(args, { temporaryReferences }),
-        headers: {
-          "x-rsc-action": id,
-        },
-      }),
-      { temporaryReferences },
-    );
+    const response = fetch(window.location.href, {
+      method: "POST",
+      body: await encodeReply(args, { temporaryReferences }),
+      headers: { Accept: RSC_CONTENT_TYPE, [ACTION_ID_HEADER]: id },
+    });
+    const payload = createFromFetch(response, { temporaryReferences });
+    const resolved = await payload;
 
-    if (payload.type === "render") {
-      startTransition(() => {
-        setPayload(Promise.resolve(payload));
-      });
-    } else if (payload.type === "redirect") {
-      if (window.navigation) {
-        window.navigation.navigate(payload.redirect, {
-          history: "replace",
-        });
-      } else {
-        window.location.href = payload.redirect;
-      }
+    if (resolved.type === "redirect") {
+      redirect(resolved.location, "push");
+    } else {
+      // Not awaited: the action's own transition holds this update until the action resolves.
+      void commit(payload);
     }
-
-    return payload.returnValue;
+    return resolved.returnValue;
   };
 }
 
-let seenPayloads = new WeakMap<Payload, Promise<void>>();
-function Content({ initialPayload }: { initialPayload: Promise<Payload> }) {
-  const [promise, _setPayload] = useState(initialPayload);
-  setPayload = _setPayload;
-
-  const payload = use(promise);
-
-  if (payload.type === "redirect") {
-    if (window.navigation) {
-      if (!seenPayloads.has(payload)) {
-        const promise = Promise.resolve(
-          window.navigation.navigate(payload.redirect, {
-            history: "replace",
-          }).finished,
-        ).then(() => {});
-        seenPayloads.set(payload, Promise.resolve(promise));
-      }
-      throw seenPayloads.get(payload)!;
-    } else {
-      window.location.href = payload.redirect;
-      return null;
-    }
-  }
-
-  return payload.root;
-}
-
+/**
+ * Hydrates the document, then handles same-origin links, form submissions, and history
+ * traversals through the Navigation API by rendering the server's RSC payload for them.
+ */
 export function hydrate({
   createFromFetch,
   createFromReadableStream,
 }: {
-  createFromFetch: (response: Promise<Response>, options?: object) => Promise<Payload>;
-  createFromReadableStream: (
-    stream: ReadableStream<Uint8Array>,
-    options?: object,
-  ) => Promise<Payload>;
+  createFromFetch: CreateFromFetch;
+  createFromReadableStream: (stream: ReadableStream<Uint8Array>) => Promise<Payload>;
 }) {
-  createFromReadableStream(rscStream).then(
-    (payload) =>
+  const initialPayload = createFromReadableStream(rscStream);
+  initialPayload.then(
+    ({ formState }) =>
       hydrateRoot(
         document,
         <StrictMode>
-          <Content initialPayload={Promise.resolve(payload)} />
+          <Content initialPayload={initialPayload} />
         </StrictMode>,
-        {
-          formState: payload.formState,
-        },
+        { formState },
       ),
     (reason) => console.error("Failed to hydrate root", reason),
   );
 
-  let navigationController = new AbortController();
-  async function navigate(to: string) {
-    const url = new URL(to, window.location.href);
-    url.pathname += ".rsc";
-
-    const thisController = new AbortController();
-    const responses = fetch(url, { signal: thisController.signal }).then((response) => [
-      response,
-      response.clone(),
-    ]);
-
-    startTransition(() => setPayload(createFromFetch(responses.then(([r]) => r))));
-    navigationController.abort();
-    navigationController = thisController;
-
-    const [, response] = await responses;
-    if (!response.body) return;
-    const reader = response.body.getReader();
-    try {
-      let chunk = await reader.read();
-      while (!chunk.done) {
-        chunk = await reader.read();
-      }
-    } finally {
-      reader.releaseLock();
+  async function navigate(url: string, init: RequestInit) {
+    const payload = createFromFetch(fetch(url, { ...init, headers: { Accept: RSC_CONTENT_TYPE } }));
+    const resolved = await payload;
+    if (resolved.type === "redirect") {
+      redirect(resolved.location, "replace");
+      return;
     }
+    await commit(payload);
   }
 
   window.navigation?.addEventListener("navigate", (event) => {
-    if (!event.canIntercept) {
-      return;
-    }
-
-    if (event.hashChange || event.downloadRequest !== null) {
-      return;
-    }
-
-    const url = new URL(event.destination.url);
-
-    if (window.location.origin !== url.origin) {
-      window.location.href = url.href;
+    if (
+      !event.canIntercept ||
+      event.hashChange ||
+      event.downloadRequest !== null ||
+      event.navigationType === "reload" ||
+      new URL(event.destination.url).origin !== window.location.origin
+    ) {
       return;
     }
 
     event.intercept({
-      async handler() {
-        const promise = navigate(event.destination.url);
-        startTransition(() => promise);
-        return promise;
-      },
+      handler: () =>
+        navigate(event.destination.url, {
+          method: event.formData ? "POST" : "GET",
+          body: event.formData,
+          signal: event.signal,
+        }),
     });
   });
 
   if (import.meta.hot) {
-    import.meta.hot.on("rsc:update", (e) => {
-      console.log("[vite-rsc:update]", e.file);
-      startTransition(() => navigate(location.href));
-    });
+    import.meta.hot.on("rsc:update", () => navigate(window.location.href, {}));
   }
 }

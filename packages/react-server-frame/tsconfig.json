@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": ["dom", "es2023"],
+    "lib": ["dom", "es2024"],
     "types": ["@vitejs/plugin-rsc/types", "dom-navigation", "node", "vite/client"],
     "moduleDetection": "force",
     "module": "nodenext",

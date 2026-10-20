@@ -7,7 +7,7 @@ import {
 } from "@vitejs/plugin-rsc/browser";
 
 import { createServerCallback, hydrate } from "react-server-frame/browser";
-import type { Payload } from "../generic-payload.ts";
+import type { Payload } from "../protocol.ts";
 
 setServerCallback(
   createServerCallback({
@@ -17,4 +17,7 @@ setServerCallback(
   }),
 );
 
-hydrate({ createFromFetch, createFromReadableStream });
+hydrate({
+  createFromFetch: (response) => createFromFetch<Payload>(response),
+  createFromReadableStream: (stream) => createFromReadableStream<Payload>(stream),
+});

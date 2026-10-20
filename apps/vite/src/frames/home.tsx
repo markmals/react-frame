@@ -13,7 +13,7 @@ export default function Home() {
     <Document>
       <main className="flex min-h-screen items-center justify-center p-4 py-24">
         <p>
-          <a href={routes.frames.protected.href()}>Protected Route</a>
+          <a href={routes.protected.href()}>Protected Route</a>
         </p>
         {auth.ok ? (
           <div className="w-full max-w-md flex flex-col gap-6">
