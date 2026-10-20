@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter var", system-ui, -apple-system, sans-serif;
+
+  /* Trellix's brand palette, from its tailwind.config.ts. */
+  --color-brand-red: #f44250;
+  --color-brand-yellow: #fecc1b;
+  --color-brand-green: #6bd968;
+  --color-brand-aqua: #3defe9;
+  --color-brand-blue: #3992ff;
+  --color-brand-pink: #d83bd2;
+
+  /* The drop indicator a card draws above or below itself, and the sliver of a list that stays
+     droppable when every card has scrolled out of view. */
+  --spacing-hairline: 2px;
+
+  /* The auth cards, which Trellix sizes at 480px. */
+  --container-form: 30rem;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
