@@ -1,0 +1,63 @@
+---
+title: A small CSS system
+description: Design tokens, two type scales, and a rule about arbitrary values. The whole system fits on one screen and that is the point.
+publishedOn: 2026-06-02
+author: priya-venkatesan
+tags: [css, design]
+---
+
+Our stylesheet has one `@theme` block and about sixty lines of base styles. That is the entire system. It has survived three redesigns, which I attribute entirely to how little of it there is.
+
+## Everything is a token
+
+Colours, spacing, radii, shadows, type sizes, and the two grid templates we use more than once:
+
+```css
+@theme {
+  --color-ink: #1f1d1b;
+  --color-muted: #6b645c;
+  --color-rule: #e3ddd3;
+  --color-accent: #8c4a2f;
+
+  --text-lede: 1.25rem;
+  --text-display: 2.5rem;
+
+  --radius-card: 0.75rem;
+  --shadow-raised: 0 1px 2px rgb(31 29 27 / 0.08);
+}
+```
+
+The value of a token is not that it saves typing. It is that renaming `--color-accent` is a grep, and changing it is one line.
+
+## The rule about arbitrary values
+
+No `w-[37px]`. No `bg-[#f5f1ea]`. If a value is worth using it is worth naming, and if it is not worth naming it is probably wrong.
+
+This rule generates the most pushback and pays for itself the fastest. Every arbitrary value I have audited fell into one of three buckets:
+
+- It should have been a token.
+- It was a one-off fix for a layout bug that had a real cause.
+- It was a magic number that nobody could explain six months later.
+
+## Write the classes inline
+
+Repeated class strings are fine. Hoisting them into a constant feels tidy and costs you the ability to see what an element looks like from the element.
+
+```tsx
+<article className="rounded-card border border-rule bg-surface p-6 shadow-raised">
+```
+
+When you genuinely need the same thing in five places and they must change together, that is a component, not a string.
+
+## Let the cascade do the boring parts
+
+Headings, lists, and links inside prose get styled once in a base layer. Rendered markdown has no class attributes to hang utilities on, so a descendant selector is the honest answer:
+
+```css
+.post-body h2 {
+  font-size: var(--text-display);
+  margin-block: --spacing(10) --spacing(4);
+}
+```
+
+That is the one place the system allows itself to be old-fashioned, and it is the one place old-fashioned is clearly correct.

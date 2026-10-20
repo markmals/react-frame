@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* No line-height companions: prose and chrome set their own leading. */
+  --text-*: initial;
+  --text-micro: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lede: 1.125rem;
+  --text-title: 1.5rem;
+  --text-heading: 1.875rem;
+  --text-display: 2.5rem;
+
+  --leading-tight: 1.25;
+  --leading-body: 1.55;
+  --leading-prose: 1.75;
+
+  --color-page: #f7f4ee;
+  --color-surface: #fffdf9;
+  --color-ink: #1f1d1b;
+  --color-muted: #6b645c;
+  --color-rule: #e3ddd3;
+  --color-accent: #8c4a2f;
+  --color-accent-hover: #6f3923;
+  --color-chip: #efe9de;
+  --color-code-surface: #262320;
+  --color-code-ink: #f1ece4;
+  --color-danger: #9b2c2c;
+  --color-danger-surface: #fbeaea;
+  --color-pending: #8a6d3b;
+
+  --radius-card: 0.75rem;
+  --radius-chip: 999px;
+
+  --shadow-raised: 0 1px 2px rgb(31 29 27 / 0.06);
+  --shadow-lifted: 0 6px 18px rgb(31 29 27 / 0.1);
+
+  --container-page: 68rem;
+  --container-measure: 40rem;
+
+  --grid-template-columns-archive: minmax(0, 1fr) 16rem;
+  --grid-template-columns-article: minmax(0, 1fr) 14rem;
+}
+
+@layer base {
+  body {
+    background: var(--color-page);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: var(--leading-body);
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  a:hover {
+    color: var(--color-accent-hover);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+/*
+ * Rendered MDX has no class attributes to hang utilities on, so the article body is styled with
+ * descendant selectors. Everything else in the app uses utilities in `className`.
+ */
+@layer components {
+  .post-body {
+    font-family: var(--font-serif);
+    font-size: var(--text-lede);
+    line-height: var(--leading-prose);
+  }
+
+  .post-body > * + * {
+    margin-block-start: --spacing(6);
+  }
+
+  .post-body h2 {
+    font-family: var(--font-sans);
+    font-size: var(--text-title);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
+    margin-block-start: --spacing(12);
+    scroll-margin-block-start: --spacing(24);
+  }
+
+  .post-body h3 {
+    font-family: var(--font-sans);
+    font-size: var(--text-lede);
+    font-weight: var(--font-weight-bold);
+    margin-block-start: --spacing(8);
+    scroll-margin-block-start: --spacing(24);
+  }
+
+  .post-body ul,
+  .post-body ol {
+    padding-inline-start: --spacing(6);
+  }
+
+  .post-body ul {
+    list-style: disc;
+  }
+
+  .post-body ol {
+    list-style: decimal;
+  }
+
+  .post-body li + li {
+    margin-block-start: --spacing(2);
+  }
+
+  .post-body strong {
+    font-weight: var(--font-weight-bold);
+  }
+
+  .post-body code {
+    background: var(--color-chip);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    padding: 0.1em 0.35em;
+  }
+
+  .post-body pre {
+    background: var(--color-code-surface);
+    border-radius: var(--radius-card);
+    color: var(--color-code-ink);
+    overflow-x: auto;
+    padding: --spacing(5);
+  }
+
+  .post-body pre code {
+    background: transparent;
+    color: inherit;
+    font-size: var(--text-sm);
+    line-height: var(--leading-body);
+    padding: 0;
+  }
+
+  .post-body table {
+    border-collapse: collapse;
+    display: block;
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .post-body th,
+  .post-body td {
+    border-block-end: 1px solid var(--color-rule);
+    padding: --spacing(2) --spacing(3);
+    text-align: start;
+  }
+
+  .post-body th {
+    font-weight: var(--font-weight-bold);
+  }
+
+  .post-body blockquote {
+    border-inline-start: 3px solid var(--color-rule);
+    color: var(--color-muted);
+    padding-inline-start: --spacing(4);
+  }
+}

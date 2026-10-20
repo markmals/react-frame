@@ -1,0 +1,79 @@
+---
+title: Progressive enhancement is not nostalgia
+description: Turning JavaScript off is a test, not a lifestyle. Here is what that test finds, and why the fix usually makes the enhanced path better too.
+publishedOn: 2026-03-04
+author: priya-venkatesan
+tags: [forms, accessibility]
+---
+
+import { Poll } from "#/ui/poll.tsx";
+
+Once a quarter I open our application with JavaScript disabled and try to do the three things our users do most. It takes about fifteen minutes. It has never once been a waste of time.
+
+This is not because I expect anyone to browse with JavaScript off. It is because the no-JavaScript path is a cheap proxy for a dozen failure modes that _do_ happen: a slow bundle, a failed deploy, a content blocker, a flaky connection, a browser extension that throws inside your error boundary.
+
+<Poll
+  question="When did you last try your own app without JavaScript?"
+  options={["This month", "This year, I think", "Never", "We don't ship any forms"]}
+/>
+
+## What the test finds
+
+The same three things, every time.
+
+1. **Buttons that are not buttons.** A `div` with an `onClick` does nothing without JavaScript, and nothing with a keyboard either. The fix is one element name.
+2. **Forms with no action.** A form whose submission is entirely in an event handler has no destination. Give it one and the browser handles the rest.
+3. **State that only exists in the client.** A filter, a tab, a sort order that lives in `useState` and nowhere else. Put it in the URL and it becomes shareable, bookmarkable, and server-renderable at the same time.
+
+None of these are exotic. All of them are things a code review should have caught and didn't, because the enhanced path worked.
+
+## The form is the unit
+
+A server function used as a form action gets you both paths from one piece of code:
+
+```tsx
+"use server";
+
+export async function addComment(slug: string, formData: FormData) {
+  let result = parseComment(formData);
+  if (!result.ok) {
+    getContext().session.flash("commentErrors", result.errors);
+    return;
+  }
+
+  await getContext().db.create(Comments, { post_slug: slug, ...result.value });
+}
+```
+
+Without JavaScript the browser posts the form, the function runs, and the page is rendered again with whatever the function saved. With JavaScript the same function is called in a transition and the section that changed is reloaded.
+
+The important detail is that there is one validation path, not two. The usual bug — client-side validation says the name is fine, the server disagrees, the user sees a stack trace — cannot happen if the client never validates in the first place.
+
+## Errors have to survive a round trip
+
+This is the part people skip. If the function rejects the submission, the error has to be visible after the browser has thrown away the page and asked for a new one.
+
+Flash state in the session works, and it works identically in both paths:
+
+- Without JavaScript, the follow-up render reads the flash.
+- With JavaScript, reloading the section reads the flash.
+
+The component does not know which one happened, which is exactly the property you want.
+
+## What you get for free
+
+Everything on this list is a consequence of the form actually being a form:
+
+- The browser's own validation messages for `required` and `type="email"`.
+- Keyboard submission with Enter.
+- Autofill.
+- A working back button.
+- Screen reader announcements for the new page.
+
+You can reimplement all of it. You will do it worse, and you will do it again on the next form.
+
+## The one real cost
+
+Keeping both paths working means your mutations have to be idempotent-ish and your redirects have to be real redirects. That is a constraint. I have come to think it is a good one: the cases where I found it genuinely painful were cases where the mutation was doing too much, and splitting it was the right call anyway.
+
+Fifteen minutes a quarter. Try it before the next release.

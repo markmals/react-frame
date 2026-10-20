@@ -1,0 +1,20 @@
+[
+  {
+    "id": "maren-oduya",
+    "name": "Maren Oduya",
+    "role": "Infrastructure, Marginalia",
+    "bio": "Maren keeps the servers boring. She writes about rendering, storage, and the unglamorous work of making a site stay up."
+  },
+  {
+    "id": "tobias-rask",
+    "name": "Tobias Rask",
+    "role": "Interface engineering",
+    "bio": "Tobias has shipped more navigation rewrites than he cares to admit. These days he is interested in how pages feel, not just how fast they load."
+  },
+  {
+    "id": "priya-venkatesan",
+    "name": "Priya Venkatesan",
+    "role": "Developer experience",
+    "bio": "Priya works on the tools between an idea and a deploy. She writes about forms, authoring, and the small details that make a codebase pleasant."
+  }
+]

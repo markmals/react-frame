@@ -1,0 +1,80 @@
+---
+title: Measuring what users feel
+description: Lab numbers are a hypothesis. Field numbers are evidence. A tour of p75 vs. median, device segments & the metric we invented and then deleted.
+publishedOn: 2026-05-06
+author: tobias-rask
+tags: [performance]
+---
+
+We spent a quarter making our lab scores better and our users did not notice. Then we spent three weeks on something the lab score barely moved and the support queue went quiet. This post is about why.
+
+## Lab data is a hypothesis
+
+A synthetic test runs on a machine you chose, on a network you chose, with a cache state you chose. It is reproducible, which is exactly what makes it misleading: real users are not reproducible.
+
+Lab data is genuinely good at one thing — telling you whether a change you just made helped. Use it as a regression detector and a debugging tool, not as a scoreboard.
+
+## Field data is evidence
+
+The numbers that changed our priorities came from real sessions, and the useful move was not looking at the median. It was segmenting.
+
+| Segment            | p75 LCP | Share of sessions |
+| ------------------ | ------- | ----------------- |
+| Desktop, broadband | 0.9 s   | 31%               |
+| High-end mobile    | 1.6 s   | 24%               |
+| Mid-range mobile   | 4.1 s   | 38%               |
+| Everything else    | 7.8 s   | 7%                |
+
+The aggregate p75 was 2.4 seconds, which looked fine. Nearly half our sessions were having a much worse time than that number suggested, and the aggregate hid it because the fast half was very fast.
+
+## The three that matter
+
+### Largest Contentful Paint
+
+When the main thing shows up. For a content site this is almost always the first paragraph or the hero image, and the fixes are boring: send markup instead of a spinner, preload the font, do not lazy-load the thing that is already on screen.
+
+### Interaction to Next Paint
+
+How long the page takes to respond when you touch it. This is the one that correlates with people describing a site as "laggy", and it is almost always a long task on the main thread.
+
+```js
+// A long task, found the hard way.
+new PerformanceObserver((list) => {
+  for (let entry of list.getEntries()) {
+    if (entry.duration > 100) console.warn("long task", entry.duration, entry.name);
+  }
+}).observe({ type: "longtask", buffered: true });
+```
+
+Ours was a 340 ms hydration pass on a page that had two interactive elements. Moving the interactivity into two small islands cut it to 40 ms.
+
+### Cumulative Layout Shift
+
+Things moving after you have started reading. Reserve space for images, reserve space for ads, and never insert a banner above content that is already painted.
+
+## The metric we invented and then deleted
+
+For one quarter we tracked "time to first meaningful interaction", defined by a heuristic we wrote ourselves. It was unstable, it was not comparable to anything, and arguing about the definition took more time than fixing anything it measured.
+
+If a standard metric is close enough, use the standard metric. Being able to compare your number to someone else's is worth more than the extra fidelity.
+
+## What actually moved the needle
+
+In order of effect, over six months:
+
+1. **Serving markup instead of an empty shell.** The single biggest change, and it was an architecture decision rather than an optimisation.
+2. **Cutting the bundle from 340 KB to 61 KB.** Mostly by not shipping a markdown renderer to the browser.
+3. **Self-hosting two font weights instead of linking five.** Three network round trips gone.
+4. **Reserving space for images.** Layout shift went to effectively zero and the complaints about "the text jumps" stopped.
+
+Note what is not on that list: micro-optimising React renders, memoising components, and the week I spent on a virtualised list for a page that shows twelve items.
+
+## A process that works
+
+- Measure the field, segmented by device class.
+- Pick the worst segment, not the average.
+- Form a hypothesis in the lab, where it is cheap.
+- Ship it, then check the field again.
+- Keep a written record of what did not work, so the next person does not repeat it.
+
+That last one is the cheapest and the most skipped. Half of this post is our record.

@@ -1,0 +1,93 @@
+---
+title: Rendering on the server, again
+description: Server rendering came back with better tools and worse slogans. Here is what actually changed, and what we had to unlearn to use it well.
+publishedOn: 2026-02-10
+author: maren-oduya
+tags: [rsc, architecture]
+---
+
+We moved our documentation site to server components in the autumn, and I have been asked the same question a dozen times since: _is it faster?_ The honest answer is that it is faster in the way that matters and slower in a way that almost never does.
+
+What follows is the version of that conversation I would rather have had the first time.
+
+## The part everyone gets right
+
+Shipping markup instead of a loading spinner is good. That has been true since 1995 and no amount of hydration cleverness made it untrue. The first paint of a server-rendered page contains words, and the first paint of a client-rendered page contains a skeleton.
+
+On a fast laptop the gap is a few hundred milliseconds. On a four-year-old Android phone on a train, the gap is the difference between reading the article and closing the tab.
+
+## The part everyone gets wrong
+
+The common mistake is to treat "server component" as a performance knob. It is not. It is a _dependency_ knob.
+
+A server component can import anything on the server, which means the code never reaches the browser:
+
+```tsx
+import { marked } from "marked";
+import { getEntry, render } from "sprinkles:content";
+
+export async function PostBody({ slug }: { slug: string }) {
+  let post = await getEntry("posts", slug);
+  if (!post) return null;
+
+  let { Content } = await render(post);
+  return <Content />;
+}
+```
+
+The markdown compiler, the syntax highlighter, the date formatting tables — none of that is in the bundle. Our documentation site's JavaScript went from 340 KB to 61 KB, and most of the remainder is the framework runtime and three interactive widgets.
+
+That is not a rendering win. That is a _packaging_ win, and it compounds in a way that shaving milliseconds off a render does not.
+
+## What we had to unlearn
+
+### Data fetching is not a lifecycle
+
+The hardest habit to break was reaching for an effect. There is no effect. There is a function call in a component that happens to be `async`, and the result is already in the markup by the time the browser sees it.
+
+The flip side is that there is no refetch either. If the page has to show new data, something has to request the route again. That is a reload, and you have to decide what scope it has.
+
+### Interactivity is a boundary, not a mode
+
+We started by marking whole pages `"use client"` because one button needed state. Then we spent a month pushing those directives down until they sat on the buttons themselves.
+
+A rough rule that has held up:
+
+- If it reads data, it is a server component.
+- If it listens to the user, it is a client component.
+- If it does both, you have two components and you have not split them yet.
+
+### The server is not free
+
+This is the "slower" part I mentioned. Every navigation is a request. On a connection with 200 ms of latency, a client-side route transition that was instant is now 200 ms of nothing happening unless you say otherwise.
+
+The fix is not to go back. The fix is to show the transition: a pending state on the link, a skeleton in the section that is loading, an optimistic update when you know the answer. React gives you the hooks for it and you have to actually use them.
+
+## A worked example
+
+Here is the shape of a page that loads a post and its comments, where only the comments are allowed to be slow:
+
+```tsx
+export function PostPage({ post }: { post: Post }) {
+  return (
+    <Layout>
+      <article>
+        <h1>{post.title}</h1>
+        <PostBody slug={post.slug} />
+      </article>
+
+      <Suspense fallback={<p>Loading comments…</p>}>
+        <Frame name="comments" src={routes.fragments.comments.href({ slug: post.slug })} />
+      </Suspense>
+    </Layout>
+  );
+}
+```
+
+The article streams immediately. The comments arrive when the database answers. When someone posts a comment, exactly one of those two things is requested again.
+
+## Was it worth it?
+
+For a content site, unambiguously. The pages are mostly text, the text comes from files, and the files are known at build time. Server rendering is the obvious fit and the tooling finally stopped fighting us about it.
+
+For an application with a lot of local state — a spreadsheet, an editor, a canvas — I would think much harder. The cost of a round trip does not go away because the architecture is fashionable.

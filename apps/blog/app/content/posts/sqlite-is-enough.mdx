@@ -1,0 +1,72 @@
+---
+title: SQLite is enough
+description: We moved a side project off a managed Postgres instance and onto a file. Two years later, here is what broke and what didn't.
+publishedOn: 2026-03-22
+author: maren-oduya
+tags: [databases, operations]
+---
+
+The project is a comment system. It serves about 400,000 reads and 3,000 writes a day across a few hundred sites. For eighteen months it ran on a managed Postgres instance that cost more than the servers.
+
+It now runs on a file.
+
+## Why it worked
+
+Reads dominate, writes are small, and the whole dataset fits in memory. That is not a rare shape — it is most content sites, most internal tools, and most of the "we might need to scale" projects that never do.
+
+The numbers that mattered:
+
+- Median read query: **0.1 ms**, because there is no network.
+- Median write: **0.4 ms** with WAL enabled.
+- Backup: a file copy.
+- Restore: a file copy.
+
+## The two settings that make it work
+
+If you remember nothing else from this post, remember these.
+
+```sql
+pragma journal_mode = wal;
+pragma busy_timeout = 5000;
+```
+
+Write-ahead logging lets readers keep reading while a write is in flight. The busy timeout turns the "database is locked" error into a short wait. Without both, the first time two requests write at once you get an exception, and you conclude that SQLite cannot handle concurrency. It can. It just defaults to telling you immediately instead of waiting.
+
+## Schema changes still need discipline
+
+This is the part that surprised people on the team. "It's just a file" does not mean migrations are optional.
+
+We use numbered migration directories with an `up.sql` and a `down.sql`, run at startup:
+
+```
+db/migrations/
+  20260301090000_create_comments/
+    up.sql
+    down.sql
+```
+
+The timestamps keep ordering unambiguous across branches, and `down.sql` is not optional. Writing the rollback is how you find out that the migration is not reversible, and finding that out before the deploy is considerably cheaper.
+
+## What actually broke
+
+Three things, in order of how much they hurt.
+
+### Long transactions
+
+A nightly job held a write transaction open for four seconds while it called an external API. Every write during those four seconds queued behind it. The fix was obvious once we saw it: do the network call first, then open the transaction.
+
+### Backups during writes
+
+Copying the file with `cp` while a write is in flight gives you a corrupt copy. Use the backup API or `VACUUM INTO`. We learned this from a restore drill, which is the correct way to learn it.
+
+### Exactly one writer
+
+SQLite serializes writes. At 3,000 a day that is invisible. At 3,000 a minute it would not be. If your write volume is genuinely high, or your writers are genuinely distributed, this is the wall and you should plan for it instead of discovering it.
+
+## When I would not do this
+
+- Writes from more than one machine.
+- A dataset meaningfully larger than the server's memory.
+- A team that needs row-level security, logical replication, or a dozen other things Postgres has and SQLite does not.
+
+That list is shorter than the industry's instincts suggest. For a blog, a documentation site, an internal dashboard, or a comment system, the file is enough, and the operational simplicity is worth more than the headroom you are not using.

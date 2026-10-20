@@ -1,0 +1,67 @@
+---
+title: Writing MDX that ages well
+description: MDX lets you put components in prose. That is a power tool, and the way to keep it from cutting you is to agree on a very short list of components.
+publishedOn: 2026-04-15
+author: priya-venkatesan
+tags: [content, authoring]
+---
+
+The pitch for MDX is that your writing can contain components. The trap is that your writing _will_ contain components, and in three years someone will have to delete one.
+
+## Keep the vocabulary small
+
+Our rule is that a component is allowed into the content directory when a third post wants it. Until then the second post copies the markup from the first.
+
+Right now the list is four items long:
+
+- `<Poll>` — a question with a few options.
+- `<Figure>` — an image with a caption.
+- `<Callout>` — a box with a tone.
+- `<Terminal>` — a transcript that does not get syntax highlighting.
+
+Four is not a target. It is what survived two years of people wanting a fifth.
+
+## Frontmatter is a schema, not a convention
+
+Validate it. Every field, every post, at build time:
+
+```ts
+let posts = defineCollection({
+  loader: glob({ pattern: "**/*.mdx", base: "app/content/posts" }),
+  schema: s.object({
+    title: s.string(),
+    description: s.string(),
+    publishedOn: coerce.date(),
+    author: reference("authors"),
+    tags: s.array(s.string()),
+    draft: s.optional(s.boolean()),
+  }),
+});
+```
+
+The build fails on a typo in a field name. That sounds annoying until the first time a post goes out with `publishDate` instead of `publishedOn` and sorts to 1970.
+
+## Prefer data over markup
+
+A post that says this:
+
+```mdx
+<Poll question="Do you test without JavaScript?" options={["Yes", "No"]} />
+```
+
+will still work after the poll is redesigned. A post that says this:
+
+```mdx
+<div className="poll poll--compact">
+  <strong>Do you test without JavaScript?</strong>
+  ...
+</div>
+```
+
+will not, and nobody will notice until it looks broken on a phone.
+
+The same applies to links. Write `[the routing post](/posts/the-case-for-nested-routes)` rather than hard-coding the production hostname: relative links survive a domain change and work in preview deploys.
+
+## Drafts belong in the content, not in a branch
+
+A `draft: true` flag that hides the post in production builds beats a long-lived branch every time. The draft is reviewable, linkable in development, and one line away from being published.

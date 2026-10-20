@@ -1,0 +1,43 @@
+---
+title: Notes on caching fragments
+description: Rough notes on giving each section of a page its own cache policy, and the invalidation problem that follows immediately afterwards.
+publishedOn: 2026-07-14
+author: maren-oduya
+tags: [performance, architecture]
+draft: true
+---
+
+These are working notes, not a finished argument. Published as a draft so the rest of the team can argue with it before I spend a week on the implementation.
+
+## The premise
+
+Once each section of a page is a route, each section can have its own `Cache-Control`. That is obviously good. The question is what happens on a write.
+
+## The invalidation problem
+
+A comment is posted. Which cached things are now wrong?
+
+- The comments section for that post. Clearly.
+- The comment count, wherever it appears.
+- The "recent activity" list on the home page.
+- The author's profile page, if it shows a reply count.
+
+The first is easy because the write knows about it. The rest are the hard part, and every system I have read about solves it with tags.
+
+## Sketch
+
+```ts
+// On render
+response.headers.set("Cache-Tag", `post:${slug} comments:${slug}`);
+
+// On write
+await purge([`comments:${slug}`, "activity"]);
+```
+
+Open questions, in the order they worry me:
+
+1. Who owns the tag vocabulary? If it is ad hoc, it rots.
+2. What happens when a purge fails? Silent staleness is worse than a slow page.
+3. Is a short TTL simply good enough for everything except the section the user just changed?
+
+I suspect the answer to the third question is yes, and that most of this is unnecessary. Writing it down to find out.

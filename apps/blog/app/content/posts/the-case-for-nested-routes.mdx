@@ -1,0 +1,68 @@
+---
+title: The case for nested routes
+description: A layout is not a wrapper component. It is a route that happens to embed other routes, and treating it that way changes what you can cache.
+publishedOn: 2026-01-19
+author: tobias-rask
+tags: [routing, architecture]
+---
+
+Every application I have worked on eventually grows a component called `Layout`. It starts as a header and a footer. Six months later it is fetching the current user, the unread notification count, the feature flags, and the sidebar's collapsed state, and every page in the application waits on all of it.
+
+The problem is not the component. The problem is that a layout is a _data_ boundary pretending to be a _rendering_ boundary.
+
+## What a layout actually is
+
+Look at what a layout does and you will find three separate jobs bundled together:
+
+- It renders chrome that is identical on every page.
+- It renders sections that change on their own schedule, like a notification bell or a cart summary.
+- It decides what the page beneath it is allowed to see.
+
+Only the first of those is really "a wrapper". The second is a page in its own right, with its own data, its own cache policy, and its own failure mode. The third is middleware.
+
+## Routes all the way down
+
+Once a layout's sections are routes, the nesting is explicit:
+
+```tsx
+export function PostPage({ post }: { post: Post }) {
+  return (
+    <Layout>
+      <article>{/* ... */}</article>
+      <Frame name="comments" src={routes.fragments.comments.href({ slug: post.slug })} />
+    </Layout>
+  );
+}
+```
+
+The comments section is requested through the router, so it runs the same middleware a browser request would. It can answer with its own status code. It can set its own cache headers. And when a comment is posted, it is the only thing that has to be fetched again.
+
+Compare that to the usual arrangement, where the comments are a component that receives a prop from a loader three levels up. To refresh the comments you refresh the loader, and refreshing the loader re-renders the page.
+
+## The caching argument
+
+This is the part that convinces people who do not care about architecture diagrams.
+
+| Section     | Changes                  | Cache   |
+| ----------- | ------------------------ | ------- |
+| Site header | On deploy                | A year  |
+| Post body   | When the author edits it | An hour |
+| Comments    | Whenever anyone types    | Never   |
+
+If those three live in one response, the response gets the shortest policy of the three, which is `no-store`. Split them into routes and each one gets the policy it deserves. The header is on the CDN, the body is on the CDN, and only the comments touch your origin.
+
+## Where it gets awkward
+
+I want to be honest about the cost, because it is real: **anything outside a frame cannot react to what is inside it.**
+
+If the comment count lives in the page header and the comments live in a frame, posting a comment updates one and not the other. You have three options, and all of them are a decision rather than a default:
+
+1. Move the count inside the frame.
+2. Reload both the frame and the page.
+3. Accept that the number is stale until the next navigation.
+
+Most of the time the first option is correct, and it is a nudge toward putting related things near each other. But you have to notice the problem first, and nothing in the type system notices it for you.
+
+## Start with one
+
+You do not have to redesign the application. Pick the one section that changes on a different schedule than the page around it — a cart, a notification list, a comment thread — and make it a route. You will know within a day whether the boundary was in the right place, because the right boundary makes the reload story obvious and the wrong one makes it fussy.
