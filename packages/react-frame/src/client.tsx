@@ -1,6 +1,15 @@
 "use client";
 
-import { use, useCallback, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  use,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useOptimistic,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 
 import {
   detachedPage,
@@ -71,6 +80,8 @@ export function ClientFrame({
   const [content, setContent] = useState<Content>(children);
   const [currentSrc, setCurrentSrc] = useState(src);
   const [pending, startTransition] = useTransition();
+  // Set inside the load's transition, so it clears itself once the submission's content shows.
+  const [formData, setFormData] = useOptimistic<FormData | undefined>(undefined);
 
   // The surrounding content loading again (the page on the server, or a parent frame) replaces
   // content loaded into this frame since.
@@ -115,7 +126,10 @@ export function ClientFrame({
       latestLoadRef.current = loaded;
 
       if (!init.method || init.method === "GET") setCurrentSrc(url.pathname + url.search);
-      startTransition(() => setContent(next));
+      startTransition(() => {
+        setFormData(init.body ?? undefined);
+        setContent(next);
+      });
       return loaded;
     },
     [resolveFrame],
@@ -127,8 +141,8 @@ export function ClientFrame({
   );
 
   const frame = useMemo(
-    () => ({ src: currentSrc, pending, reload }),
-    [currentSrc, pending, reload],
+    () => ({ src: currentSrc, pending, formData, reload }),
+    [currentSrc, pending, formData, reload],
   );
 
   useLayoutEffect(() => {

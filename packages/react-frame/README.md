@@ -67,9 +67,16 @@ A frame is resolved by sending a subrequest through the router, so its route run
 
 ### Reload frames
 
-Frames are independently reloadable sections of the page. `reload()` fetches the frame's route again and resolves once the new content has loaded. Inside a transition, React shows it when the transition finishes, so pending state and new content appear together. `src` is the pathname and search of the URL the frame shows, or is loading.
+Frames are independently reloadable sections of the page. `reload()` fetches the frame's route again and resolves once the new content has loaded. Inside a transition, React shows it when the transition finishes, so pending state and new content appear together.
 
-Outside any `<Frame>`, `useFrame()` returns the page itself: its `src` and `pending` follow navigations, and its `reload()` renders the current URL again.
+A frame's state stands in for reload events: `pending` turns `true` when a load starts and `false` once its content shows, `src` is the pathname and search of the URL the frame shows or is loading, and `formData` holds the submitted data while the frame loads a form submission. Components render from them instead of listening for events.
+
+Outside any `<Frame>`, `useFrame()` returns the page itself: its `src`, `pending`, and `formData` follow navigations, and its `reload()` renders the current URL again. A form that posts to its own page can tell its submission from any other load:
+
+```tsx
+const page = useFrame();
+const submitting = page.formData !== undefined && new URL(page.src, url).pathname === url.pathname;
+```
 
 ```tsx
 "use client";

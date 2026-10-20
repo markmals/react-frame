@@ -32,6 +32,7 @@ interface Shown {
 interface PageStatus {
   src: string;
   pending: boolean;
+  formData?: FormData;
 }
 
 export interface Page {
@@ -91,10 +92,10 @@ export function createPage(resolveFrame: ResolveFrame, content: Content): Page {
     const controller = new AbortController();
     current = controller;
     const settle = () => {
-      if (current === controller) setStatus({ ...status, pending: false });
+      if (current === controller) setStatus({ src: status.src, pending: false });
     };
 
-    setStatus({ src: url.pathname + url.search, pending: true });
+    setStatus({ src: url.pathname + url.search, pending: true, formData: init.body ?? undefined });
     try {
       const resolution = await resolveFrame(url, {
         ...init,
@@ -125,8 +126,8 @@ export function createPage(resolveFrame: ResolveFrame, content: Content): Page {
     useLayoutEffect(() => setMounted(setShown), []);
     useLayoutEffect(() => commits.get(shown)?.(), [shown]);
 
-    const { src, pending } = useSyncExternalStore(subscribe, getStatus, getStatus);
-    const frame = useMemo(() => ({ src, pending, reload }), [src, pending]);
+    const { src, pending, formData } = useSyncExternalStore(subscribe, getStatus, getStatus);
+    const frame = useMemo(() => ({ src, pending, formData, reload }), [src, pending, formData]);
     const scope = useFrameScope(shown.content);
 
     return (

@@ -2,8 +2,13 @@
 export interface Frame {
   /** The pathname and search of the URL the frame shows, or is loading. */
   readonly src: string;
-  /** Whether the frame is loading new content. */
+  /**
+   * Whether the frame is loading new content. It turns `true` when a load starts and `false` once
+   * the new content shows, so rendering from it covers what reload start and complete events would.
+   */
   readonly pending: boolean;
+  /** While the frame loads a form submission, the submitted data; otherwise `undefined`. */
+  readonly formData?: FormData;
   /**
    * Reloads the frame from its source, resolving once the new content has loaded. React shows it
    * right away, or, inside a transition, when the transition finishes.
