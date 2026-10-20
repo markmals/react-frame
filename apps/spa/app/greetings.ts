@@ -14,6 +14,7 @@ export function listGreetings() {
   return greetings;
 }
 
-export function clearGreetings() {
+// Shaped like a server function, so the same form action works if this app moves to a server.
+export async function clearGreetings() {
   greetings = [];
 }

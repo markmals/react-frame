@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Frame } from "react-frame";
 import { useFrame } from "react-frame/client";
 
@@ -78,16 +77,10 @@ interface GreetingPageProps extends PageProps {
 }
 
 export function GreetingPage({ isSubmission = false, name, url }: GreetingPageProps) {
+  // The form posts to this page, so a submission loading this same path is its own. A plain reload
+  // of the page has no form data, so it doesn't count.
   let page = useFrame();
-  let [submitting, setSubmitting] = useState(false);
-
-  // The submission ends when the page has loaded again. React keeps this state across that load
-  // because the new page renders the same component in the same place.
-  let [wasPending, setWasPending] = useState(page.pending);
-  if (wasPending !== page.pending) {
-    setWasPending(page.pending);
-    if (!page.pending) setSubmitting(false);
-  }
+  let submitting = page.formData !== undefined && new URL(page.src, url).pathname === url.pathname;
 
   return (
     <Layout url={url}>
@@ -99,12 +92,7 @@ export function GreetingPage({ isSubmission = false, name, url }: GreetingPagePr
           forward traversals revisit this URL with GET because history entries do not retain form
           data.
         </p>
-        <form
-          method="POST"
-          action={routes.submitGreet.href()}
-          onSubmit={() => setSubmitting(true)}
-          className={formClass}
-        >
+        <form method="POST" action={routes.submitGreet.href()} className={formClass}>
           <label htmlFor="next-name" className="font-bold">
             Try another name
           </label>

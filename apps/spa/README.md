@@ -4,7 +4,7 @@ A port of the [Remix 3 SPA demo](https://github.com/remix-run/remix/tree/main/de
 
 The app has the same layout as a server-rendered one: `app/routes.ts` defines its URL contract, `app/router.tsx` configures the router, and `app/actions/controller.tsx` handles the routes. Pages live beside the controller, shared UI lives in `app/ui/`, and `app/main.tsx` starts the browser runtime. The demo covers a direct deep link, client-side links, aborting delayed routes, POST form data, and push/replace history behavior.
 
-One addition to Remix's demo: the greeting page embeds `/greetings` with `<Frame>` from `react-frame`. The frame's route goes through the same router, loads again whenever the page does, and its Clear button reloads only the frame, leaving the rest of the page (including a half-typed name) as it was.
+One addition to Remix's demo: the greeting page embeds `/greetings` with `<Frame>` from `react-frame`. The frame's route goes through the same router and loads again whenever the page does. It also shows the other way to mutate: where the greeting form is a plain `<form method="POST">` that the router handles as a navigation, the frame's Clear button is a React form action. It clears the list in place, reloads only the frame, and leaves the rest of the page (including a half-typed name) as it was, with `useFormStatus()` showing it pending.
 
 ## Run It
 

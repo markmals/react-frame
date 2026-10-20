@@ -21,9 +21,9 @@ function start(path: string) {
   };
 }
 
-afterEach(() => {
+afterEach(async () => {
   stop?.();
-  clearGreetings();
+  await clearGreetings();
   history.replaceState(null, "", testerUrl);
 });
 
@@ -82,6 +82,21 @@ describe("SPA", () => {
     navigation.back();
     await expect.element(heading("A client-only React app")).toBeVisible();
     expect(location.pathname).toBe("/");
+  });
+
+  it("reads Submitting… for its own submission, not for a plain reload of the page", async () => {
+    start("/greet");
+    await expect.element(page.getByText("No greetings yet.")).toBeVisible();
+
+    await page.getByRole("link", { name: "Greet" }).click();
+    await vi.waitFor(() => expect(navigation.transition).not.toBeNull());
+    // Check partway through: the greetings frame takes 300 ms, so the page is still loading.
+    let { promise: elapsed, resolve } = Promise.withResolvers<void>();
+    setTimeout(resolve, 100);
+    await elapsed;
+    expect(navigation.transition).not.toBeNull();
+    expect(page.getByRole("button", { name: "Submitting…" }).elements()).toHaveLength(0);
+    await vi.waitFor(() => expect(navigation.transition).toBeNull());
   });
 
   it("shows greetings in a frame that loads again with the page and reloads on its own", async () => {

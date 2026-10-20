@@ -227,6 +227,19 @@ run(router, { container: document.getElementById("root")!, fallback: <p>Loadingâ
 
 `run()` renders the route for the current URL into `container`, showing `fallback` until it has loaded. From then on, every navigation, frame, and reload is a request dispatched through `router` in the browser, so routes run their middleware, read submitted forms with `request.formData()`, and can return `redirect()` responses. Its default `resolveFrame` is `createRouteResolver(router)`; pass `resolveFrame` to `run()` to wrap or replace it. `dispose()` on the value `run()` returns unmounts the app.
 
-Outside React Server Components, `import { Frame } from "react-frame"` gets a frame that resolves in the browser, so a page renders unchanged in either kind of app. It suspends until its route has loaded, like a server-rendered frame, and loads again whenever the content around it does. `useFrame()`, `useFrames()`, `data-target`, and `data-src` behave as they do on a server; there are no server functions, so mutations call ordinary functions and then reload the frames that show what changed.
+Outside React Server Components, `import { Frame } from "react-frame"` gets a frame that resolves in the browser, so a page renders unchanged in either kind of app. It suspends until its route has loaded, like a server-rendered frame, and loads again whenever the content around it does. `useFrame()`, `useFrames()`, `data-target`, and `data-src` behave as they do on a server.
+
+There are no server functions, so a mutation is either a `<form method="POST">` that the router handles as a navigation, or a form action that calls an ordinary function and reloads the frames that show what changed. Write those functions like server functions, async and taking `FormData` when they need input, and the same form works if the app moves to a server:
+
+```tsx
+<form
+  action={async () => {
+    await clearGreetings();
+    await frame.reload();
+  }}
+>
+  <ClearButton />
+</form>
+```
 
 [`apps/spa`](https://github.com/markmals/react-frame/tree/main/apps/spa) is a port of Remix's SPA demo.
