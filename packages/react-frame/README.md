@@ -242,4 +242,18 @@ There are no server functions, so a mutation is either a `<form method="POST">` 
 </form>
 ```
 
-[`apps/spa`](https://github.com/markmals/react-frame/tree/main/apps/spa) is a port of Remix's SPA demo.
+[`apps/spa`](https://github.com/markmals/react-frame/tree/main/apps/spa) and [`apps/notes`](https://github.com/markmals/react-frame/tree/main/apps/notes) are single-page apps built this way.
+
+## Demo apps
+
+Each app in [`apps/`](https://github.com/markmals/react-frame/tree/main/apps) is a different kind of project built on the same routes, controllers, and frames:
+
+| App                                                                                 | Kind                        | What it exercises                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`bookstore`](https://github.com/markmals/react-frame/tree/main/apps/bookstore)     | E-commerce                  | A port of Remix's bookstore demo: sessions and auth, cart frames reloaded by server functions, admin CRUD                                                                                       |
+| [`blog`](https://github.com/markmals/react-frame/tree/main/apps/blog)               | Content site                | MDX posts from `@withsprinkles/content-layer`, a post-list frame that tag links load with `data-target`, a comments frame reloaded after each comment                                           |
+| [`curvilinear`](https://github.com/markmals/react-frame/tree/main/apps/curvilinear) | Issue tracker               | A Linear clone modeled on Curvilinear: menu and main frames, TanStack Query hydrated by one `<HydrationBoundary>` per response that middleware installs, optimistic status and priority changes |
+| [`trellix`](https://github.com/markmals/react-frame/tree/main/apps/trellix)         | Interactive board           | A port of Trellix: a frame per board column, optimistic cards and columns across frames, native drag and drop                                                                                   |
+| [`notes`](https://github.com/markmals/react-frame/tree/main/apps/notes)             | Local-first single-page app | Notes in IndexedDB edited with TipTap on `react-frame/spa`, autosave that reloads only the sidebar frame                                                                                        |
+| [`spa`](https://github.com/markmals/react-frame/tree/main/apps/spa)                 | Single-page app             | A port of Remix's SPA demo                                                                                                                                                                      |
+| [`vite`](https://github.com/markmals/react-frame/tree/main/apps/vite)               | Starter                     | A home page and a protected page                                                                                                                                                                |
