@@ -9,7 +9,7 @@ export function CartPage() {
       <h1>Shopping Cart</h1>
 
       <div className="card">
-        <Frame src={routes.fragments.cartItems.href()} />
+        <Frame name="cart" src={routes.fragments.cartItems.href()} />
       </div>
     </Layout>
   );

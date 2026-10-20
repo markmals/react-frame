@@ -10,14 +10,17 @@ export type Payload =
   | {
       type: "render";
       root: React.ReactNode;
-      returnValue?: Promise<unknown>;
       formState?: ReactFormState;
     }
   | {
       type: "redirect";
       location: string;
       returnValue?: Promise<unknown>;
-      formState?: undefined;
+    }
+  | {
+      /** A server function's result, sent without re-rendering the page. */
+      type: "action";
+      returnValue: Promise<unknown>;
     };
 
 export function isRscRequest(request: Request) {

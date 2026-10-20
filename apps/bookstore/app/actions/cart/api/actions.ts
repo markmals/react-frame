@@ -21,9 +21,7 @@ const CartUpdateSchema = f.object({
   quantity: QuantityField,
 });
 
-// Both take the previous state first because the cart uses them with useActionState.
-
-export async function updateCartItem(_previousState: unknown, formData: FormData) {
+export async function updateCartItem(formData: FormData) {
   let { db, session } = getContext();
   let { bookId, quantity } = s.parse(CartUpdateSchema, formData);
   await sleep(1000);
@@ -36,10 +34,9 @@ export async function updateCartItem(_previousState: unknown, formData: FormData
 
   let nextQuantity = parseInt(quantity, 10);
   session.set("cart", updateItem(getCurrentCart(session), book.id, nextQuantity));
-  return null;
 }
 
-export async function removeCartItem(_previousState: unknown, formData: FormData) {
+export async function removeCartItem(formData: FormData) {
   let { db, session } = getContext();
   let { bookId } = s.parse(CartActionSchema, formData);
   if (process.env.NODE_ENV !== "test") {
@@ -53,5 +50,4 @@ export async function removeCartItem(_previousState: unknown, formData: FormData
   }
 
   session.set("cart", removeFromCart(getCurrentCart(session), book.id));
-  return null;
 }

@@ -1,23 +1,22 @@
 import { Cookie, SetCookie } from "remix/headers";
 import type { RequestContext } from "remix/router";
 
-import { ACTION_ID_HEADER } from "../protocol.ts";
 import type { ActionState } from "./server-actions.ts";
 
-const REQUEST_HEADERS_TO_REMOVE = ["Content-Length", "Content-Type", ACTION_ID_HEADER];
+const REQUEST_HEADERS_TO_REMOVE = ["Content-Length", "Content-Type"];
 
 // Identity, not a header, carries the action result so clients can't forge one.
 const actionStates = new WeakMap<Request, ActionState>();
 
-/** The server function result that a follow-up page render should include. */
+/** The submitted form's result that a follow-up page render should include. */
 export function getActionState(request: Request) {
   return actionStates.get(request);
 }
 
 /**
- * Renders the current page after a server function ran. The page is fetched through the router
- * as a new `GET` that carries the cookies the action set, so the page, and every frame it
- * resolves, reads the state the action saved instead of the state from before it ran.
+ * Renders the current page after a submitted form ran a server function. The page is fetched
+ * through the router as a new `GET` that carries the cookies the action set, so the page, and every
+ * frame it resolves, reads the state the action saved instead of the state from before it ran.
  */
 export async function renderAfterAction(
   context: RequestContext<any, any>,

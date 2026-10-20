@@ -61,10 +61,11 @@ export function RenderScopeProvider({
 
 /**
  * Renders the route at `src` in place. The frame is resolved by dispatching a subrequest through
- * the current router, so the target route runs its own middleware, and it can be reloaded in the
- * browser with `useFrame().reload()`.
+ * the current router, so the target route runs its own middleware. In the browser it reloads with
+ * `useFrame().reload()`, and a `name` lets other components find it with `useFrames().get(name)`
+ * and links and forms load into it with `data-target`.
  */
-export async function Frame({ src }: { src: string }) {
+export async function Frame({ name, src }: { name?: string; src: string }) {
   const { context, runtime } = renderScope();
   if (!context || !runtime) {
     throw new Error("<Frame> must be rendered through context.render()");
@@ -86,7 +87,7 @@ export async function Frame({ src }: { src: string }) {
   }
 
   return (
-    <ClientFrame src={url.pathname + url.search} fetchFrame={runtime.fetchFrame}>
+    <ClientFrame name={name} src={url.pathname + url.search} fetchFrame={runtime.fetchFrame}>
       {payload.root}
     </ClientFrame>
   );

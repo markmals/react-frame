@@ -51,8 +51,11 @@ export async function register(formData: FormData) {
   let { email, name, password } = s.parse(RegistrationSchema, formData);
   let normalizedEmail = normalizeEmail(email);
 
+  // The demo rendered these outcomes straight from its POST. A server function navigates instead,
+  // back to the same page, whose controller renders the flashed outcome.
   if (await db.findOne(Users, { where: { email: normalizedEmail } })) {
     session.flash("existingAccount", true);
+    redirect(routes.auth.register.index.href());
     return;
   }
 
@@ -89,6 +92,7 @@ export async function requestPasswordReset(formData: FormData) {
   }
 
   context.session.flash("resetLinkSent", { token });
+  redirect(routes.auth.forgotPassword.index.href());
 }
 
 export async function resetPassword(token: string, formData: FormData) {
@@ -126,4 +130,5 @@ export async function resetPassword(token: string, formData: FormData) {
   await db.delete(PasswordResetTokens, { token });
 
   session.flash("passwordReset", true);
+  redirect(routes.auth.resetPassword.index.href({ token }));
 }

@@ -22,14 +22,14 @@ For a production build, run `pnpm build` and then `pnpm start`.
 
 - Start with [`app/routes.ts`](app/routes.ts) and [`app/router.ts`](app/router.ts) for the typed route contract and the middleware stack. `render()` installs `context.render()`, and `serverActions()` runs server functions posted to the current URL.
 - Follow the storefront through [`app/actions/books`](app/actions/books), [`app/actions/cart`](app/actions/cart), and [`app/actions/checkout`](app/actions/checkout). Pages are async server components that load their own data, so sibling sections such as the genre list and the book grid query in parallel.
-- The cart button and cart table are frames ([`app/actions/fragments`](app/actions/fragments)): `<Frame src>` renders their routes on the server, and the client components in those folders add pending states with `useFormStatus` and `useActionState`.
+- The cart button and cart table are frames ([`app/actions/fragments`](app/actions/fragments)): `<Frame src>` renders their routes on the server. Like the demo's client entries, the client components in those folders run their mutation and then reload their own frame with `useFrame().reload()`, so only that part of the page updates. Their forms still post the server function when JavaScript hasn't loaded.
 - Look in [`app/actions/auth`](app/actions/auth), [`app/actions/account`](app/actions/account), and [`app/actions/admin`](app/actions/admin) for nested controllers, sessions, authorization, CRUD, and cover uploads. Each `actions.ts` holds the server functions for its area; they check authorization themselves because route middleware doesn't run before them.
 - [`app/ui`](app/ui) contains the shared document, layout, and stylesheet. Styling is Tailwind; shared values live in the `@theme` block of [`app/ui/app.css`](app/ui/app.css), next to the demo's component classes.
 - [`app/data/schema.ts`](app/data/schema.ts), [`db/migrations`](db/migrations), and [`remix.json`](remix.json) show the typed SQLite schema and the `remix db` workflow.
 
 ## Differences From the Demo
 
-- Mutations are server functions instead of `POST`, `PUT`, and `DELETE` routes, so there's no `_method` override or `RestfulForm`. When the demo's action rendered a page instead of redirecting (registering a taken email, requesting a password reset, sending a contact message), the server function flashes the outcome to the session and the page's `GET` controller renders it.
+- Mutations are server functions instead of `POST`, `PUT`, and `DELETE` routes, so there's no `_method` override or `RestfulForm`. When the demo's action rendered a page instead of redirecting (registering a taken email, requesting or completing a password reset, sending a contact message), the server function flashes the outcome to the session and redirects back to the same page, whose `GET` controller renders it.
 - Vite serves static files and compiled assets, so the demo's `assets` route and colocated `public` directories are gone.
 - Navigation uses the Navigation API: links and `GET` forms fetch RSC payloads instead of reloading the document.
 

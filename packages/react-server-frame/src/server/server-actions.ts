@@ -2,16 +2,12 @@ import type { ReactFormState } from "react-dom/client";
 import { getContext } from "remix/middleware/async-context";
 import type { Middleware, RequestContext } from "remix/router";
 
-import { ACTION_ID_HEADER, isRscRequest, RSC_CONTENT_TYPE } from "../protocol.ts";
+import { ACTION_ID_HEADER, RSC_CONTENT_TYPE, type Payload } from "../protocol.ts";
 import { renderPayload, type ServerRuntime } from "./runtime.ts";
 
-/** The result of a server function call, which `render()` passes to the follow-up page render. */
+/** A submitted form's server function result, which `render()` passes to the page it renders. */
 export class ActionState {
-  constructor(
-    readonly formState?: ReactFormState,
-    readonly returnValue?: Promise<unknown>,
-    readonly temporaryReferences?: unknown,
-  ) {}
+  constructor(readonly formState?: ReactFormState) {}
 }
 
 class RedirectState {
@@ -19,39 +15,30 @@ class RedirectState {
 }
 
 /**
- * Redirects after the current server function finishes instead of re-rendering the page.
- * Requires the `asyncContext()` middleware.
+ * Navigates to `location` once the current server function finishes. Requires the
+ * `asyncContext()` middleware.
  */
 export function redirect(location: string) {
   getContext().set(RedirectState, new RedirectState(location));
 }
 
 /**
- * Runs server functions sent to the current URL, both from the browser runtime and from forms
- * submitted before JavaScript loads. Unless the function called `redirect()`, `render()` then
- * renders the current page in a follow-up `GET` so it reflects state saved by the action.
+ * Runs server functions sent to the current URL. Calls from the browser runtime respond with the
+ * function's result and leave updating the page to the caller, which can reload frames. Forms
+ * submitted before JavaScript loads get a document instead: `render()` renders the current page
+ * in a follow-up `GET`, unless the function called `redirect()`.
  */
 export function createServerActions(runtime: ServerRuntime): Middleware {
   return async (context, next) => {
     if (context.method !== "POST") return next();
+    if (context.headers.has(ACTION_ID_HEADER)) return callServerFunction(context, runtime);
 
-    const state = context.headers.has(ACTION_ID_HEADER)
-      ? await callServerFunction(context, runtime)
-      : await submitFormAction(context, runtime);
+    const state = await submitFormAction(context, runtime);
     if (!state) return next();
 
     const location = context.get(RedirectState)?.location;
     if (location !== undefined) {
-      if (!isRscRequest(context.request)) {
-        return new Response(null, { status: 303, headers: { Location: location } });
-      }
-      const body = renderPayload(
-        runtime,
-        context.request,
-        { type: "redirect", location, returnValue: state.returnValue },
-        state.temporaryReferences,
-      );
-      return new Response(body, { headers: { "Content-Type": RSC_CONTENT_TYPE } });
+      return new Response(null, { status: 303, headers: { Location: location } });
     }
 
     // Respond without rendering so outer middleware (sessions in particular) persist the action's
@@ -78,7 +65,13 @@ async function callServerFunction(context: RequestContext<any, any>, runtime: Se
     returnValue = Promise.reject(error);
   }
 
-  return new ActionState(undefined, returnValue, temporaryReferences);
+  const location = context.get(RedirectState)?.location;
+  const payload: Payload =
+    location === undefined
+      ? { type: "action", returnValue }
+      : { type: "redirect", location, returnValue };
+  const stream = renderPayload(runtime, context.request, payload, temporaryReferences);
+  return new Response(stream, { headers: { "Content-Type": RSC_CONTENT_TYPE } });
 }
 
 async function submitFormAction(context: RequestContext<any, any>, runtime: ServerRuntime) {

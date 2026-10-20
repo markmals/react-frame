@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
+import { useFrame } from "react-server-frame/client";
 
 import { routes } from "../../routes.ts";
 import { removeCartItem, updateCartItem } from "../cart/api/actions.ts";
@@ -19,14 +20,32 @@ type CartItemsProps = {
   canCheckout: boolean;
 };
 
-export function CartItems({ items, total, canCheckout }: CartItemsProps) {
-  // useActionState supplies a pending flag shared by every row's form while keeping the forms
-  // usable before JavaScript loads. `submittedBookId` says which row the pending action is for.
-  let [, update, isUpdating] = useActionState(updateCartItem, null);
-  let [, remove, isRemoving] = useActionState(removeCartItem, null);
-  let [submittedBookId, setSubmittedBookId] = useState<number | null>(null);
+type PendingAction = { type: "update" | "remove"; bookId: number };
 
-  let isPending = isUpdating || isRemoving;
+export function CartItems({ items, total, canCheckout }: CartItemsProps) {
+  let frame = useFrame();
+  let [isPending, startTransition] = useTransition();
+  let [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+
+  // Without JavaScript the browser submits each form's server function and loads the page again.
+  // With it, like the demo, run the mutation and then reload this frame while showing which row
+  // is pending.
+  let submit = (
+    event: React.FormEvent<HTMLFormElement>,
+    action: (formData: FormData) => Promise<void>,
+    nextAction: PendingAction,
+  ) => {
+    event.preventDefault();
+    if (isPending) return;
+
+    let formData = new FormData(event.currentTarget);
+    setPendingAction(nextAction);
+    startTransition(async () => {
+      await action(formData);
+      await frame.reload();
+    });
+  };
+
   let totalLabel = isPending ? "---" : `$${total.toFixed(2)}`;
 
   return (
@@ -45,7 +64,8 @@ export function CartItems({ items, total, canCheckout }: CartItemsProps) {
         </thead>
         <tbody>
           {items.map((item) => {
-            let isRowSubmitted = submittedBookId === item.bookId;
+            let rowAction =
+              isPending && pendingAction?.bookId === item.bookId ? pendingAction.type : null;
 
             return (
               <tr key={item.bookId}>
@@ -57,8 +77,10 @@ export function CartItems({ items, total, canCheckout }: CartItemsProps) {
 
                 <td>
                   <form
-                    action={update}
-                    onSubmit={() => setSubmittedBookId(item.bookId)}
+                    action={updateCartItem}
+                    onSubmit={(event) =>
+                      submit(event, updateCartItem, { type: "update", bookId: item.bookId })
+                    }
                     className="inline-flex items-center gap-2"
                   >
                     <input type="hidden" name="bookId" value={item.bookId} />
@@ -77,7 +99,7 @@ export function CartItems({ items, total, canCheckout }: CartItemsProps) {
                       disabled={isPending}
                       className="btn btn-secondary min-w-25 px-2 py-1 text-center text-sm"
                     >
-                      {isUpdating && isRowSubmitted ? "Saving..." : "Update"}
+                      {rowAction === "update" ? "Saving..." : "Update"}
                     </button>
                   </form>
                 </td>
@@ -86,8 +108,10 @@ export function CartItems({ items, total, canCheckout }: CartItemsProps) {
 
                 <td>
                   <form
-                    action={remove}
-                    onSubmit={() => setSubmittedBookId(item.bookId)}
+                    action={removeCartItem}
+                    onSubmit={(event) =>
+                      submit(event, removeCartItem, { type: "remove", bookId: item.bookId })
+                    }
                     className="inline"
                   >
                     <input type="hidden" name="bookId" value={item.bookId} />
@@ -97,7 +121,7 @@ export function CartItems({ items, total, canCheckout }: CartItemsProps) {
                       disabled={isPending}
                       className="btn btn-danger min-w-28 px-2 py-1 text-center text-sm"
                     >
-                      {isRemoving && isRowSubmitted ? "Removing..." : "Remove"}
+                      {rowAction === "remove" ? "Removing..." : "Remove"}
                     </button>
                   </form>
                 </td>

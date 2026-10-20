@@ -21,8 +21,9 @@ export type RenderMiddleware = Middleware<{
  * payload when the browser runtime or a `<Frame>` asks for one. Redirect responses to RSC
  * navigations become redirect payloads so the browser runtime can update the URL.
  *
- * After a server function runs, the page is rendered in a follow-up `GET` that sees the state
- * the function saved. Install this before `session()` so the session is persisted by then.
+ * After a form submitted without JavaScript runs a server function, the page is rendered in a
+ * follow-up `GET` that sees the state the function saved. Install this before `session()` so the
+ * session is persisted by then.
  */
 export function createRender(runtime: ServerRuntime): RenderMiddleware {
   const install = renderWith((context) => createRenderFunction(context, runtime));
@@ -58,21 +59,15 @@ function createRenderFunction(
 ): RenderFunction {
   return async (root, init) => {
     const action = getActionState(context.request);
-    const body = renderPayload(
-      runtime,
-      context.request,
-      {
-        type: "render",
-        root: (
-          <RenderScopeProvider context={context} runtime={runtime}>
-            {root}
-          </RenderScopeProvider>
-        ),
-        formState: action?.formState,
-        returnValue: action?.returnValue,
-      },
-      action?.temporaryReferences,
-    );
+    const body = renderPayload(runtime, context.request, {
+      type: "render",
+      root: (
+        <RenderScopeProvider context={context} runtime={runtime}>
+          {root}
+        </RenderScopeProvider>
+      ),
+      formState: action?.formState,
+    });
 
     if (isRscRequest(context.request)) {
       return new Response(body, { status: init?.status, headers: rscHeaders(init?.headers) });
