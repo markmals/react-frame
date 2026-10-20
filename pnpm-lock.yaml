@@ -336,6 +336,58 @@ importers:
         specifier: 'catalog:'
         version: 1.3.0(@types/node@24.19.2)(@vitest/browser-playwright@5.0.5)(@vitest/ui@5.0.5)(esbuild@0.27.7)(jiti@2.7.0)(msw@2.12.14(@types/node@24.19.2)(typescript@7.0.2))(playwright@1.64.1)(terser@5.46.1)(tsx@4.21.0)(typescript@7.0.2)(yaml@2.8.3)
 
+  apps/spa:
+    dependencies:
+      react:
+        specifier: 'catalog:'
+        version: 19.3.1
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.3.1(react@19.3.1)
+      react-frame:
+        specifier: 'workspace:'
+        version: link:../../packages/react-frame
+      remix:
+        specifier: 'catalog:'
+        version: 3.0.0(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(playwright@1.64.1)
+    devDependencies:
+      '@tailwindcss/vite':
+        specifier: 'catalog:'
+        version: 4.3.3(@voidzero-dev/vite-plus-core@1.3.0(@types/node@24.19.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(typescript@7.0.2)(yaml@2.8.3))
+      '@types/dom-navigation':
+        specifier: 'catalog:'
+        version: 1.0.7
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.3.0(@types/react@19.3.0)
+      '@vitejs/plugin-react':
+        specifier: 'catalog:'
+        version: 6.1.2(@voidzero-dev/vite-plus-core@1.3.0(@types/node@24.19.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(typescript@7.0.2)(yaml@2.8.3))(babel-plugin-react-compiler@1.0.0)(oxc-transform-react@0.152.0)
+      '@vitest/browser-playwright':
+        specifier: 'catalog:'
+        version: 5.0.5(@voidzero-dev/vite-plus-core@1.3.0(@types/node@24.19.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(typescript@7.0.2)(yaml@2.8.3))(msw@2.12.14(@types/node@24.19.2)(typescript@7.0.2))(playwright@1.64.1)(vitest@5.0.5)
+      oxc-transform-react:
+        specifier: 'catalog:'
+        version: 0.152.0
+      playwright:
+        specifier: 'catalog:'
+        version: 1.64.1
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.3.3
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vite:
+        specifier: 'catalog:'
+        version: '@voidzero-dev/vite-plus-core@1.3.0(@types/node@24.19.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(typescript@7.0.2)(yaml@2.8.3)'
+      vite-plus:
+        specifier: 'catalog:'
+        version: 1.3.0(@types/node@24.19.2)(@vitest/browser-playwright@5.0.5)(@vitest/ui@5.0.5)(esbuild@0.27.7)(jiti@2.7.0)(msw@2.12.14(@types/node@24.19.2)(typescript@7.0.2))(playwright@1.64.1)(terser@5.46.1)(tsx@4.21.0)(typescript@7.0.2)(yaml@2.8.3)
+
   apps/vite:
     dependencies:
       '@base-ui/react':
