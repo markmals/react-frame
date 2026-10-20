@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "react-server-frame";
-import { completeAuth, verifyCredentials } from "remix/auth";
+import { verifyCredentials } from "remix/auth";
 import { getContext } from "remix/middleware/async-context";
 import { Session } from "remix/session";
 
@@ -22,7 +22,7 @@ export async function logoutAction(): Promise<LogoutResult> {
   try {
     const session = getContext().get(Session);
     session.unset("auth");
-    session.regenerateId(true);
+    session.regenerateId();
     redirect(routes.frames.home.href());
     return {
       success: true,
@@ -61,7 +61,11 @@ export async function loginAction(_: unknown, formData: FormData): Promise<Login
       };
     }
 
-    completeAuth(context).set("auth", { username: identity.username } satisfies AuthSession);
+    // Rotate the session ID like completeAuth() does, minus its deleteOldSession flag: cookie
+    // storage keeps no server-side copy to delete, so that flag only logs a warning.
+    const session = context.get(Session);
+    session.regenerateId();
+    session.set("auth", { username: identity.username } satisfies AuthSession);
     redirect(routes.frames.home.href());
   } catch (reason) {
     console.error(reason);
